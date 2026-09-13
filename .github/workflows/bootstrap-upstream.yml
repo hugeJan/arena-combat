@@ -1,0 +1,82 @@
+name: Import pinned Stick and Steel baseline
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/bootstrap-upstream.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  import:
+    if: github.repository == 'hugeJan/arena-combat'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Rabneba/stick-steel
+          ref: 4c8e1d05a1ec47db93b687a81a82878727308b20
+          path: .upstream-source
+          persist-credentials: false
+          lfs: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Import public game modules, excluding fonts and production configuration
+        run: |
+          python3 - <<'PY'
+          import pathlib, shutil, json, hashlib, subprocess
+          root=pathlib.Path.cwd(); src=root/'.upstream-source'; dst=root/'vendor/stick-steel'
+          assert subprocess.check_output(['git','-C',str(src),'rev-parse','HEAD'],text=True).strip()=='4c8e1d05a1ec47db93b687a81a82878727308b20'
+          if dst.exists(): raise SystemExit('Baseline already imported; refusing to overwrite modifications')
+          dst.mkdir(parents=True)
+          blocked={'.woff','.woff2','.ttf','.otf','.eot'}
+          for folder in ['lib','tests']:
+              for path in (src/folder).rglob('*'):
+                  if path.is_file() and not path.is_symlink() and path.suffix.lower() not in blocked:
+                      out=dst/path.relative_to(src); out.parent.mkdir(parents=True,exist_ok=True); shutil.copyfile(path,out)
+          for name in ['LICENSE','README.md']:
+              shutil.copyfile(src/name,dst/name)
+          assets=root/'public/assets'; assets.mkdir(parents=True)
+          for path in (src/'public/assets').rglob('*'):
+              if path.is_file() and not path.is_symlink() and path.suffix.lower() not in blocked and 'font' not in str(path.relative_to(src/'public/assets')).lower():
+                  if path.read_bytes()[:50].startswith(b'version https://git-lfs.github.com/spec'): raise SystemExit('Missing LFS asset: '+str(path))
+                  out=assets/path.relative_to(src/'public/assets'); out.parent.mkdir(parents=True,exist_ok=True); shutil.copyfile(path,out)
+          manifest={'repository':'https://github.com/Rabneba/stick-steel','commit':'4c8e1d05a1ec47db93b687a81a82878727308b20','license':'MIT','networkServices':False,'files':{}}
+          for folder in [dst,assets]:
+              for p in sorted(folder.rglob('*')):
+                  if p.is_file(): manifest['files'][str(p.relative_to(root))]=hashlib.sha256(p.read_bytes()).hexdigest()
+          (root/'upstream.lock.json').write_text(json.dumps(manifest,indent=2)+'\n')
+          package={'name':'arena-combat','version':'0.1.0-dev','private':True,'type':'module','license':'MIT','engines':{'node':'>=22.13.0'},'scripts':{'test:upstream':'tsx --test vendor/stick-steel/tests/duel.test.ts'},'dependencies':{'@dimforge/rapier3d-compat':'0.19.0','three':'0.180.0'},'devDependencies':{'@types/node':'22.19.19','@types/three':'0.180.0','tsx':'4.20.6','typescript':'5.9.3','vite':'8.0.13'}}
+          (root/'package.json').write_text(json.dumps(package,indent=2)+'\n')
+          (root/'.gitignore').write_text('node_modules\ndist/\n.upstream-source/\noutputs/\n.arena/\n.DS_Store\n.env\n.env.*\n')
+          shutil.copyfile(dst/'LICENSE',root/'LICENSE')
+          PY
+          npm install --ignore-scripts --no-audit --no-fund
+      - name: Publish imported baseline without rewriting history
+        run: |
+          git config user.name 'Arena development'
+          git config user.email 'arena-development@users.noreply.github.com'
+          git add -- vendor/stick-steel public/assets upstream.lock.json package.json package-lock.json .gitignore LICENSE
+          git commit -m 'Import pinned Stick and Steel game modules and licensed assets'
+          git push origin HEAD:main
+      - name: Run real upstream physical tests
+        run: |
+          mkdir -p /tmp/arena-baseline
+          npm run test:upstream | tee /tmp/arena-baseline/upstream-tests.txt
+      - name: Capture inspectable source and offline dependencies
+        if: always()
+        run: |
+          mkdir -p /tmp/arena-baseline
+          git archive --format=tar.gz HEAD > /tmp/arena-baseline/source.tar.gz
+          git rev-parse HEAD > /tmp/arena-baseline/commit.txt
+          if [ -d node_modules ]; then tar -czf /tmp/arena-baseline/dependencies.tar.gz node_modules; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: arena-baseline
+          path: /tmp/arena-baseline/
+          retention-days: 7
