@@ -1,0 +1,139 @@
+name: Publish and validate first AI arena
+on:
+  push:
+    branches: [main]
+    paths: ['.bootstrap/**']
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  publish:
+    if: github.repository == 'hugeJan/arena-combat' && github.event.head_commit.message == 'Stage locally tested AI arena implementation'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    outputs:
+      commit: ${{ steps.publish.outputs.commit }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Materialize hash-verified implementation
+        run: |
+          python3 - <<'PY'
+          import pathlib,base64,lzma,hashlib,json
+          root=pathlib.Path.cwd()
+          raw=base64.b64decode(''.join((root/f'.bootstrap/part{i}.b64').read_text() for i in range(3)),validate=True)
+          assert hashlib.sha256(raw).hexdigest()=='76add695897e5d3f551e8eb853bc587047a01755b7181a3b72f82226e4a8283e'
+          data=lzma.decompress(raw,memlimit=256*1024**2)
+          assert len(data)==111266
+          assert hashlib.sha256(data).hexdigest()=='9472dec993a55d1a65ee6ce1a10d1a074241d91cb7f7179a469960f61880e286'
+          files=json.loads(data)
+          assert len(files)==31
+          for name,text in files.items():
+              path=pathlib.PurePosixPath(name)
+              assert not path.is_absolute() and '..' not in path.parts
+              assert name in ['.gitignore','AGENTS.md','README.md','index.html','package.json','tsconfig.json','vite.config.ts'] or name.startswith(('docs/','examples/','patches/','scripts/','src/','tests/'))
+              assert isinstance(text,str)
+              target=root/name;target.parent.mkdir(parents=True,exist_ok=True);target.write_text(text,encoding='utf-8')
+          pathlib.Path('/tmp/arena-files.json').write_bytes(data)
+          PY
+      - name: Verify source before publication
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          mkdir -p outputs/checks
+          npm test | tee outputs/checks/tests.txt
+          npm run test:upstream | tee outputs/checks/upstream.txt
+          npm run build | tee outputs/checks/build.txt
+      - name: Publish exact tested text files atomically
+        id: publish
+        env:
+          ARENA_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import pathlib,json,os,urllib.request
+          endpoint='https://api.github.com/repos/hugeJan/arena-combat/'
+          def api(path,data=None,method=None):
+              req=urllib.request.Request(endpoint+path,data=json.dumps(data).encode() if data is not None else None,method=method,headers={'Authorization':'Bearer '+os.environ['ARENA_TOKEN'],'Accept':'application/vnd.github+json','Content-Type':'application/json','User-Agent':'arena-source-publish'})
+              with urllib.request.urlopen(req,timeout=60) as response:return json.load(response)
+          parent=os.environ['GITHUB_SHA']
+          assert api('git/ref/heads/main')['object']['sha']==parent,'Remote changed; refusing overwrite'
+          base=api('git/commits/'+parent)['tree']['sha']
+          files=json.loads(pathlib.Path('/tmp/arena-files.json').read_text())
+          for name,text in files.items():assert pathlib.Path(name).read_text()==text,name
+          tree=[{'path':name,'mode':'100644','type':'blob','content':text} for name,text in files.items()]
+          tree += [{'path':f'.bootstrap/part{i}.b64','mode':'100644','type':'blob','sha':None} for i in range(3)]
+          newtree=api('git/trees',{'base_tree':base,'tree':tree})['sha']
+          commit=api('git/commits',{'message':'Implement dual-design Stick and Steel arena, spectator UI, CLI and verified matches','tree':newtree,'parents':[parent]})['sha']
+          api('git/refs/heads/main',{'sha':commit,'force':False},'PATCH')
+          pathlib.Path('outputs/checks/commit.txt').write_text(commit+'\n')
+          with open(os.environ['GITHUB_OUTPUT'],'a') as stream:stream.write('commit='+commit+'\n')
+          print('Published implementation:',commit)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: initial-code-checks
+          path: outputs/checks/
+          retention-days: 7
+  browser:
+    needs: publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.publish.outputs.commit }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build and check real UI
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run build
+          python -m pip install 'playwright==1.55.0'
+          python -m playwright install --with-deps chromium
+          python scripts/check-browser.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: initial-browser-checks
+          path: outputs/browser/
+          retention-days: 7
+  macos:
+    needs: publish
+    runs-on: macos-14
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.publish.outputs.commit }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test and run full swapped duels
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          mkdir -p outputs/checks
+          npm test | tee outputs/checks/tests.txt
+          npm run test:upstream | tee outputs/checks/upstream.txt
+          npm run build | tee outputs/checks/build.txt
+          npm run arena -- match examples/pressure.json examples/counter.json --swap --duration 30 --out outputs/macos-matches
+          git rev-parse HEAD > outputs/checks/commit.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: initial-macos-checks
+          path: outputs/
+          retention-days: 7
