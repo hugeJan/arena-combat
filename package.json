@@ -8,7 +8,13 @@
     "node": ">=22.13.0"
   },
   "scripts": {
-    "test:upstream": "tsx --test vendor/stick-steel/tests/duel.test.ts"
+    "prepare:engine": "node scripts/prepare-engine.mjs",
+    "dev": "node scripts/prepare-engine.mjs && vite",
+    "build": "node scripts/prepare-engine.mjs && tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "node scripts/prepare-engine.mjs && tsx --test tests/unit/*.test.ts tests/integration/*.test.ts",
+    "test:upstream": "tsx --test vendor/stick-steel/tests/duel.test.ts",
+    "arena": "node scripts/prepare-engine.mjs && tsx src/cli.ts"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "0.19.0",

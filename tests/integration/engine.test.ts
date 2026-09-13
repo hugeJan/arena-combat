@@ -1,0 +1,17 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {ArenaEngine,initPhysics,STEP} from '../../src/engine/adapter';
+import {Match} from '../../src/arena/match';
+import {neutralAction} from '../../src/arena/types';
+import {parseDesign} from '../../src/arena/schema';
+await initPhysics();
+const load=(name:string)=>parseDesign(readFileSync(new URL(`../../examples/${name}.json`,import.meta.url),'utf8'));
+test('both seats use external controls, not online transport or the built-in bot',()=>{const e=new ArenaEngine();try{assert.equal(e.simulation.online,false);assert.ok(e.simulation.isHuman(0)&&e.simulation.isHuman(1));e.start();for(let i=0;i<600;i++)e.step();assert.deepEqual(e.simulation.fighters.map(f=>f.aiTime),[0,0]);assert.deepEqual(e.simulation.fighters.map(f=>f.hp),[100,100]);}finally{e.dispose();}});
+test('both seats get identical action timings and resources',()=>{const e=new ArenaEngine();try{e.start();const a=neutralAction();a.command='slash';const f=e.submit([a,a]);assert.ok(f.every(x=>x.accepted));const [x,y]=e.simulation.fighters;assert.equal(x.slashDuration,y.slashDuration);assert.equal(x.windupDuration,y.windupDuration);assert.equal(x.stamina,y.stamina);}finally{e.dispose();}});
+test('both observations have the same tick and reveal no enemy private resource',()=>{const e=new ArenaEngine();try{const [a,b]=e.observations();assert.equal(a.tick,b.tick);assert.equal(a.time,b.time);assert.equal('health' in a.opponent,false);assert.equal('stamina' in a.opponent,false);assert.ok(Object.isFrozen(a.self));}finally{e.dispose();}});
+test('invalid second seat cannot partially commit first seat',()=>{const e=new ArenaEngine();try{e.start();const a=neutralAction();a.command='slash';assert.throws(()=>e.submit([a,{...a,move:[NaN,0]}]));assert.equal(e.simulation.fighters[0].slashTime,0);}finally{e.dispose();}});
+test('lunge executes for both seats and pays stamina',()=>{const e=new ArenaEngine();try{e.start();const a=neutralAction();a.command='lunge';assert.ok(e.submit([a,a]).every(f=>f.accepted));assert.deepEqual(e.simulation.fighters.map(f=>f.stamina),[82,82]);assert.deepEqual(e.simulation.fighters.map(f=>f.lungeTime),[.24,.24]);}finally{e.dispose();}});
+test('external defender actually moves a weapon into a guard',()=>{const e=new ArenaEngine();try{e.start();const a=neutralAction();a.guard=true;a.aim=[-.7,.9];e.submit([a,a]);for(let i=0;i<30;i++)e.step();assert.ok(e.simulation.fighters.every(f=>f.guard));assert.ok(e.simulation.fighters.every(f=>f.aim.x<-.3));}finally{e.dispose();}});
+test('two authored policies produce physical contacts, decisions and replay frames',()=>{const m=new Match(load('pressure'),load('counter'),8);try{const r=m.run();assert.equal(r.outcome?.status,'completed');assert.ok(r.decisions.length>0);assert.ok(r.frames.length>20);assert.ok(r.events.some(e=>e.kind==='hit'||e.kind==='block'));assert.ok(r.decisions.every(d=>d.observations[0].tick===d.observations[1].tick));}finally{m.dispose();}});
+test('same process and locked environment reproduce identical poses and outcomes',()=>{const records=[];for(let i=0;i<2;i++){const m=new Match(load('pressure'),load('counter'),3);try{records.push(m.run());}finally{m.dispose();}}assert.deepEqual(records[0].frames,records[1].frames);assert.deepEqual(records[0].outcome,records[1].outcome);});

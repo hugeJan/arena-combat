@@ -1,0 +1,19 @@
+{
+  "description": "Explicit local two-external-seat mode. Keeps original single player behavior. Both external seats use identical input, timings and recovery requests, never the built-in bot.",
+  "source": "lib/duel/physics.ts",
+  "source_sha256": "ba3336eaba5c1a04002c30557da70988332726b41d4c00d8f4dfbcf3ec7d9d9d",
+  "changes": [
+    {
+      "before": "  online = false;",
+      "after": "  online = false;\n  /** Arena extension: external control is independent of network transport. */\n  externalControl = false;"
+    },
+    {
+      "before": "  isHuman(id: number) { return id === 0 || this.online || this.training !== 'off'; }",
+      "after": "  isHuman(id: number) { return this.externalControl || id === 0 || this.online || this.training !== 'off'; }"
+    },
+    {
+      "before": "  constructor(options: Partial<DuelOptions> = {}) {\n    this.options",
+      "after": "  constructor(options: Partial<DuelOptions> = {}, externalControl = false) {\n    this.externalControl = externalControl;\n    this.options"
+    }
+  ]
+}

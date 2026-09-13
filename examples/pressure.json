@@ -1,0 +1,343 @@
+{
+  "version": "steel-design-1",
+  "name": "赤锋 · 前压",
+  "description": "开发样例，不是独立模型作品。持续接近、挥斩和短突进，精力不足时撤出。",
+  "stance": {
+    "move": [
+      0.08,
+      0
+    ],
+    "aim": [
+      0.18,
+      0.8
+    ],
+    "guard": true
+  },
+  "moves": {
+    "起身": {
+      "steps": [
+        {
+          "duration": 0.7,
+          "action": {
+            "move": [
+              0,
+              0
+            ],
+            "guard": false,
+            "interact": true
+          }
+        }
+      ]
+    },
+    "捡武器": {
+      "steps": [
+        {
+          "duration": 1,
+          "action": {
+            "move": [
+              0,
+              0
+            ],
+            "guard": false,
+            "attack": false,
+            "interact": true,
+            "command": "pickup"
+          }
+        }
+      ]
+    },
+    "撤步恢复": {
+      "steps": [
+        {
+          "duration": 0.8,
+          "action": {
+            "move": [
+              -0.15,
+              -0.9
+            ],
+            "guard": true,
+            "attack": false
+          }
+        }
+      ],
+      "abort_when": {
+        "feature": "self.stamina",
+        "op": "gt",
+        "value": 75
+      }
+    },
+    "逼近": {
+      "steps": [
+        {
+          "duration": 0.25,
+          "action": {
+            "move": [
+              0.12,
+              0.8
+            ],
+            "guard": true,
+            "attack": false
+          }
+        }
+      ]
+    },
+    "高位格挡": {
+      "steps": [
+        {
+          "duration": 0.25,
+          "action": {
+            "move": [
+              -0.3,
+              -0.15
+            ],
+            "guard": true,
+            "attack": false,
+            "aim": [
+              0.18,
+              0.8
+            ]
+          }
+        }
+      ]
+    },
+    "斜线格挡": {
+      "steps": [
+        {
+          "duration": 0.3,
+          "action": {
+            "move": [
+              0.3,
+              0
+            ],
+            "guard": true,
+            "attack": false,
+            "aim": [
+              -0.5,
+              0.5
+            ]
+          },
+          "aim_to": [
+            0.2,
+            0.8
+          ]
+        }
+      ]
+    },
+    "切入挥斩": {
+      "steps": [
+        {
+          "duration": 0.06,
+          "action": {
+            "guard": false,
+            "attack": false,
+            "move": [
+              0.08,
+              0
+            ],
+            "command": "slash"
+          },
+          "wait_for_idle": true
+        },
+        {
+          "duration": 0.2,
+          "action": {
+            "move": [
+              -0.25,
+              -0.25
+            ],
+            "guard": true
+          }
+        }
+      ]
+    },
+    "下劈": {
+      "steps": [
+        {
+          "duration": 0.06,
+          "action": {
+            "guard": false,
+            "attack": false,
+            "move": [
+              -0.1,
+              0
+            ],
+            "command": "chop"
+          },
+          "wait_for_idle": true
+        }
+      ]
+    },
+    "短突进": {
+      "steps": [
+        {
+          "duration": 0.24,
+          "action": {
+            "move": [
+              0,
+              0.4
+            ],
+            "guard": false,
+            "attack": false,
+            "command": "lunge"
+          }
+        },
+        {
+          "duration": 0.06,
+          "action": {
+            "guard": false,
+            "attack": false,
+            "command": "slash"
+          },
+          "wait_for_idle": true
+        }
+      ]
+    },
+    "自由挥动": {
+      "steps": [
+        {
+          "duration": 0.25,
+          "action": {
+            "guard": false,
+            "attack": true,
+            "aim": [
+              -0.85,
+              0.75
+            ],
+            "move": [
+              0.2,
+              0.1
+            ]
+          },
+          "aim_to": [
+            0.8,
+            0.05
+          ]
+        },
+        {
+          "duration": 0.35,
+          "action": {
+            "guard": true,
+            "attack": false,
+            "move": [
+              0,
+              -0.4
+            ]
+          }
+        }
+      ]
+    },
+    "拉开距离": {
+      "steps": [
+        {
+          "duration": 0.3,
+          "action": {
+            "move": [
+              0.12,
+              -0.9
+            ],
+            "guard": true,
+            "attack": false
+          }
+        }
+      ]
+    }
+  },
+  "rules": [
+    {
+      "id": "倒地后起身",
+      "when": {
+        "feature": "self.mode",
+        "op": "eq",
+        "value": "fallen"
+      },
+      "move": "起身",
+      "interrupt": true
+    },
+    {
+      "id": "重新持械",
+      "when": {
+        "feature": "self.has_weapon",
+        "op": "eq",
+        "value": false
+      },
+      "move": "捡武器",
+      "interrupt": true,
+      "cooldown": 1.2
+    },
+    {
+      "id": "精力恢复",
+      "when": {
+        "feature": "self.stamina",
+        "op": "lt",
+        "value": 26
+      },
+      "move": "撤步恢复",
+      "interrupt": true,
+      "cooldown": 1
+    },
+    {
+      "id": "避免贴身挤压",
+      "when": {
+        "feature": "distance",
+        "op": "lt",
+        "value": 1.25
+      },
+      "move": "拉开距离",
+      "interrupt": true,
+      "cooldown": 0.3
+    },
+    {
+      "id": "近距挥斩",
+      "when": {
+        "all": [
+          {
+            "feature": "distance",
+            "op": "lt",
+            "value": 1.9
+          },
+          {
+            "feature": "self.can_attack",
+            "op": "eq",
+            "value": true
+          }
+        ]
+      },
+      "move": "切入挥斩",
+      "cooldown": 0.4
+    },
+    {
+      "id": "中距突进",
+      "when": {
+        "all": [
+          {
+            "feature": "distance",
+            "op": "gt",
+            "value": 2.3
+          },
+          {
+            "feature": "distance",
+            "op": "lt",
+            "value": 2.8
+          },
+          {
+            "feature": "self.can_lunge",
+            "op": "eq",
+            "value": true
+          }
+        ]
+      },
+      "move": "短突进",
+      "cooldown": 1.7
+    },
+    {
+      "id": "持续接近",
+      "when": {
+        "feature": "distance",
+        "op": "gt",
+        "value": 1.45
+      },
+      "move": "逼近",
+      "cooldown": 0.25
+    }
+  ]
+}

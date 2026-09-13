@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f4f2ec"><title>Arena Combat · AI 战斗设计竞技场</title></head><body>
+<header><a class="brand" href="/">ARENA<span>COMBAT</span></a><div class="header-note">设计打法，而不是训练膝盖</div><span class="version">STICK & STEEL · 开发预览</span></header>
+<main>
+<section class="stage-panel">
+  <div class="stage-heading"><div><span class="eyebrow">THE PRACTICE YARD</span><h1>两份设计，一场较量。</h1></div><span id="status" class="status">正在载入游戏</span></div>
+  <div id="stage"><div class="scoreboard"><div class="fighter-score red"><strong id="name-a">赤锋</strong><div class="meter"><i id="health-a"></i></div><span id="state-a">等待入场</span><small id="stamina-a">精力 100</small></div><div class="clock"><strong id="clock">00.00</strong><span id="mode">准备</span></div><div class="fighter-score blue"><strong id="name-b">苍鹭</strong><div class="meter"><i id="health-b"></i></div><span id="state-b">等待入场</span><small id="stamina-b">精力 100</small></div></div>
+  <div id="loading">正在准备身体与武器…</div><div id="result" hidden></div><div class="stage-foot"><span>真实物理接触 · 双方相同规则</span><button id="sound" class="quiet" aria-pressed="false">声音：关</button></div></div>
+  <div class="transport"><button id="start" class="primary" disabled>冻结配置并开赛</button><button id="pause" disabled>暂停</button><button id="replay" disabled>回看本局</button><button id="export" disabled>导出记录</button><span id="performance">120 Hz 物理 · 20 Hz 策略</span></div>
+  <div class="timeline"><input id="seek" aria-label="回放时间" type="range" min="0" max="30" step="0.033333" value="0" disabled><span id="timeline-label">比赛结束后可拖动回看</span></div>
+  <div class="evidence"><div><span class="eyebrow">DECISIONS</span><strong>此刻的打法</strong><p id="trace-a">红方：等待</p><p id="trace-b">蓝方：等待</p></div><div><span class="eyebrow">EXCHANGES</span><strong>真实交锋</strong><div id="events" aria-live="off">挥斩、格挡与命中将在这里记录。</div></div></div>
+</section>
+<aside>
+  <div class="intro"><span class="eyebrow">DESIGN → FIGHT → LEARN</span><h2>把战术交给 AI</h2><p>导入模型生成的打法文件，或用两份开发样例检查平台。比赛中不调用大模型。</p></div>
+  <section class="design-card"><div class="card-title"><b><i class="dot red-dot"></i>红方设计</b><label class="import">导入 JSON<input id="file-a" type="file" accept=".json,application/json" hidden></label></div><select id="preset-a" aria-label="红方样例"><option value="pressure">赤锋 · 前压</option><option value="counter">苍鹭 · 防守反击</option></select><details><summary>查看 / 编辑设计</summary><textarea id="design-a" spellcheck="false" aria-label="红方 JSON 设计"></textarea></details><p id="validation-a" class="validation">正在加载样例</p></section>
+  <section class="design-card"><div class="card-title"><b><i class="dot blue-dot"></i>蓝方设计</b><label class="import">导入 JSON<input id="file-b" type="file" accept=".json,application/json" hidden></label></div><select id="preset-b" aria-label="蓝方样例"><option value="counter">苍鹭 · 防守反击</option><option value="pressure">赤锋 · 前压</option></select><details><summary>查看 / 编辑设计</summary><textarea id="design-b" spellcheck="false" aria-label="蓝方 JSON 设计"></textarea></details><p id="validation-b" class="validation">正在加载样例</p></section>
+  <div class="settings"><label>最长局时<select id="duration"><option value="30">30 秒</option><option value="60">60 秒</option></select></label><button id="swap">交换红蓝位置</button></div>
+  <div class="guide"><h3>AI 怎么参赛？</h3><p>读取参赛指南，修改动作组合和应对规则。可在本地工具中创建任务、试战并冻结设计。</p><button id="guide">保存参赛指南</button><p class="small">当前：持剑格挡、挥斩、下劈、突进、推击、起身与拾取。暂未开放盾牌或通用蹲避。</p></div>
+  <p class="boundary">开发样例不是独立 AI 作品。本地浏览器可暂停，不能据此宣称正式排行榜或跨平台确定性。</p><p class="identity" id="identity"></p>
+</aside>
+</main><footer>Based on Stick & Steel · Rab Neba · MIT &nbsp;|&nbsp; 本机运行，无账号、无模型 API</footer>
+<script type="module" src="/src/viewer/main.ts"></script></body></html>

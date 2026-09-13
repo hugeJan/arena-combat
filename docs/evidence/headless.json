@@ -1,0 +1,85 @@
+{
+  "version": "arena-summary-1",
+  "runtime": {
+    "node": "v22.16.0",
+    "platform": "linux",
+    "arch": "x64"
+  },
+  "results": [
+    {
+      "file": "match-1.json",
+      "engineHash": "524bdd49f7186c1f2df66ff7e02fefa5ebe8d79245a0313af8baad81b5fb000f",
+      "designs": [
+        "赤锋 · 前压",
+        "苍鹭 · 防守反击"
+      ],
+      "outcome": {
+        "status": "completed",
+        "winner": 0,
+        "reason": "Unable to continue",
+        "tick": 1569,
+        "time": 13.075
+      },
+      "wallMs": 1783.6856790000002,
+      "computeMs": 1489.4663869999981,
+      "simulationToCompute": 8.778311557829076,
+      "decisions": 262,
+      "events": 16,
+      "recordSha256": "c11a7ec52605222e8c6832c036954046fb5cdd008adce8cbb0bd966468e10170",
+      "contactsByKind": {
+        "block": 6,
+        "hit": 5,
+        "sever": 2,
+        "floor": 3
+      },
+      "commandsBySeat": [
+        {
+          "slash": 11
+        },
+        {
+          "slash": 1,
+          "chop": 6,
+          "pickup": 3
+        }
+      ]
+    },
+    {
+      "file": "match-2.json",
+      "engineHash": "524bdd49f7186c1f2df66ff7e02fefa5ebe8d79245a0313af8baad81b5fb000f",
+      "designs": [
+        "苍鹭 · 防守反击",
+        "赤锋 · 前压"
+      ],
+      "outcome": {
+        "status": "completed",
+        "winner": 1,
+        "reason": "Decisive strike",
+        "tick": 2926,
+        "time": 24.383333333333333
+      },
+      "wallMs": 2672.4913640000004,
+      "computeMs": 2479.0428630000015,
+      "simulationToCompute": 9.83578529329096,
+      "decisions": 488,
+      "events": 27,
+      "recordSha256": "2da2b256cb42e4c8aca9dd8b9dce32f42f8990b5d58cb91e7fed986527d4a227",
+      "contactsByKind": {
+        "block": 13,
+        "hit": 12,
+        "sever": 1,
+        "floor": 1
+      },
+      "commandsBySeat": [
+        {
+          "slash": 4,
+          "chop": 14
+        },
+        {
+          "slash": 19,
+          "pickup": 2
+        }
+      ]
+    }
+  ],
+  "scope": "Actual developer examples; Linux headless computation, not Mac rendering or independent AI benchmark."
+}
