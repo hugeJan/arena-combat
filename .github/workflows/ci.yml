@@ -35,6 +35,7 @@ jobs:
           npm test | tee outputs/checks/tests.txt
           npm run test:upstream | tee outputs/checks/upstream.txt
           npm run build | tee outputs/checks/build.txt
+          npm run test:combat > outputs/checks/combat.txt
           npm run arena -- match examples/pressure.json examples/counter.json --swap --duration 30 --out outputs/matches
       - uses: actions/upload-artifact@v4
         if: always()
