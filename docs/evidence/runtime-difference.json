@@ -1,0 +1,10 @@
+{
+  "sourceCommit": "c1845832cfb3c6bb36d250876be259a561443cc5",
+  "engineHash": "524bdd49f7186c1f2df66ff7e02fefa5ebe8d79245a0313af8baad81b5fb000f",
+  "sameDesigns": true,
+  "nodeOutcome": {"status": "completed", "winner": 0, "reason": "Unable to continue", "tick": 1569, "time": 13.075},
+  "browserOutcome": {"status": "completed", "winner": 1, "reason": "Decisive strike", "tick": 2811, "time": 23.425},
+  "initialNodePosition": [-1.0529580116271973, 0.9677878022193909, -0.0011799411149695516],
+  "initialBrowserPosition": [-1.0529570579528809, 0.967788577079773, -0.0011804323876276612],
+  "conclusion": "Observed cross-runtime divergence before first contestant action; cause not yet isolated; not approved for cross-environment ranking."
+}

@@ -1,0 +1,22 @@
+{
+  "sourceCommit": "49175c1b19fe29e0c91b54539aa7cad17b98abc0",
+  "runId": 34750392390,
+  "environment": "GitHub ubuntu-latest, headless Chromium 140 via Playwright 1.55.0",
+  "errors": [],
+  "failedRequests": [],
+  "fpsText": "9 FPS · 已记录姿态 · 实算 3.29s",
+  "result": "蓝方获胜",
+  "pauseStable": true,
+  "replaySeek": true,
+  "mobileNoOverflow": true,
+  "outcome": {"status": "completed", "winner": 1, "reason": "Decisive strike", "tick": 2811, "time": 23.425},
+  "computeMs": 3293.899999999907,
+  "screenshots": {
+    "ready.png": "d56fba210039cb941bc27506e39499972d9e171d9f68c49c3ee4a33f36ee34bb",
+    "fighting.png": "5a3e31809b1f01eab6860f6f4651816217b18d6b61cfc82a3ee488d9776299cf",
+    "finished.png": "a37ad454b4d07fc0edf3375b238b8d00c7d12a1a9fef925cab56d7aba70ad521",
+    "replay.png": "d9bb21640057dea1fcd4fafbfabe1b0337c42b25b25dc2b0ebd6f1ba7b711db7",
+    "mobile.png": "0b499426a3ed424d0b07fdb485f3f637c8cfba26f641f19608726e7ab0d5e8d6"
+  },
+  "notice": "UI functional verification passed. CI screenshot shows low graphical FPS and backlog; this is not proof of 60 FPS or real-time graphical performance on the user Mac."
+}
