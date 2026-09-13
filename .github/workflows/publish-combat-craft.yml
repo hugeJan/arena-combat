@@ -1,8 +1,8 @@
 name: Publish tested combat craft
 on:
   push:
-    branches: [feat/combat-craft]
-    paths: ['.delivery/**']
+    branches: [feat/combat-craft-verified]
+    paths: ['.delivery/**', '.github/workflows/publish-combat-craft.yml']
 permissions:
   contents: read
 defaults:
@@ -10,7 +10,7 @@ defaults:
     shell: bash
 jobs:
   publish:
-    if: github.repository == 'hugeJan/arena-combat' && github.ref == 'refs/heads/feat/combat-craft' && github.event.head_commit.message == 'Stage tested combat craft implementation'
+    if: github.repository == 'hugeJan/arena-combat' && github.ref == 'refs/heads/feat/combat-craft-verified' && github.event.head_commit.message == 'Stage tested combat craft implementation'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -18,7 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 3
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
@@ -30,7 +30,8 @@ jobs:
           root=pathlib.Path.cwd();m=json.loads((root/'.delivery/craft-manifest.json').read_text())
           base='973755a5e2494d2c95473d17619c6d7edccb8f0f'
           assert m['base']==base
-          assert subprocess.check_output(['git','rev-parse','HEAD^'],text=True).strip()==base
+          assert subprocess.check_output(['git','rev-parse','HEAD^'],text=True).strip()=='495eedf2d554ae3d99575dabad3f447844f10652'
+          assert subprocess.check_output(['git','rev-parse','HEAD^^'],text=True).strip()==base
           encoded=''.join((root/f'.delivery/craft.{i}.b64').read_text() for i in range(4))
           compressed=base64.b64decode(encoded,validate=True)
           assert hashlib.sha256(compressed).hexdigest()==m['compressed_sha256']
@@ -67,7 +68,7 @@ jobs:
               b=(root/name).read_bytes();assert hashlib.sha256(b).hexdigest()==digest,name
               additions.append({'path':name,'contents':base64.b64encode(b).decode()})
           query='mutation($input:CreateCommitOnBranchInput!){createCommitOnBranch(input:$input){commit{oid url}}}'
-          variables={'input':{'branch':{'repositoryNameWithOwner':'hugeJan/arena-combat','branchName':'feat/combat-craft'},'expectedHeadOid':os.environ['GITHUB_SHA'],'message':{'headline':'Implement committed swordcraft and desktop spectator arena'},'fileChanges':{'additions':additions,'deletions':[{'path':f'.delivery/craft.{i}.b64'} for i in range(4)]+[{'path':'.delivery/craft-manifest.json'}]}}}
+          variables={'input':{'branch':{'repositoryNameWithOwner':'hugeJan/arena-combat','branchName':'feat/combat-craft-verified'},'expectedHeadOid':os.environ['GITHUB_SHA'],'message':{'headline':'Implement committed swordcraft and desktop spectator arena'},'fileChanges':{'additions':additions,'deletions':[{'path':f'.delivery/craft.{i}.b64'} for i in range(4)]+[{'path':'.delivery/craft-manifest.json'}]}}}
           p=pathlib.Path('/tmp/craft-commit.json');p.write_text(json.dumps({'query':query,'variables':variables}))
           response=json.loads(subprocess.check_output(['gh','api','graphql','--input',str(p)],text=True))
           assert 'errors' not in response,response.get('errors')
