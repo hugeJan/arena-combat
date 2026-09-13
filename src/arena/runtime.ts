@@ -1,3 +1,4 @@
+import {TECHNIQUES} from './choreography';
 import {validateDesign} from './schema';
 import {clone, deepFreeze, neutralAction, type Action, type Condition, type Design, type FeatureValues, type Observation, type Trace} from './types';
 
@@ -32,6 +33,8 @@ export class Designer {
   private blocks = 0;
   private lastHit = -1000;
   private lastBlock = -1000;
+  private lastThreat = -1000;
+  private highFraction = .5;
   constructor(design: unknown) { this.design = validateDesign(design); }
 
   private features(o: Observation): FeatureValues {
@@ -46,14 +49,20 @@ export class Designer {
     const toward=o.self.position.map((x,i)=>x-p[i]);
     const length=Math.hypot(...toward);
     const closing=toward.reduce((n,x,i)=>n+x*v[i],0)/Math.max(.01,length);
+    const incoming=closing>.8 && length<1.8;
+    if(incoming){this.lastThreat=o.time;this.highFraction+=.10*((p[1]>o.self.position[1]+.4?1:0)-this.highFraction);}
+    const side=(p[0]-o.self.position[0])*Math.cos(o.self.heading)-(p[2]-o.self.position[2])*Math.sin(o.self.heading);
     return {
       time:o.time, distance:Math.hypot(dx,dz), bearing,
       'self.health':o.self.health, 'self.stamina':o.self.stamina, 'self.mode':o.self.mode,
       'self.has_weapon':o.self.has_weapon, 'self.can_attack':o.self.can_attack, 'self.can_lunge':o.self.can_lunge,
       'self.counter_ready':o.self.counter_ready,
+      'self.can_feint':o.self.can_feint??false,'self.can_backstep':o.self.can_backstep??false,
+      'self.is_windup':o.self.is_windup??false,'self.is_recovering':o.self.is_recovering??false,'self.attack_progress':o.self.attack_progress??0,
       'opponent.mode':o.opponent.mode, 'opponent.has_weapon':o.opponent.has_weapon,
       'opponent.weapon_speed':Math.hypot(...v), 'opponent.weapon_height':p[1]-o.self.position[1],
-      'opponent.incoming':closing>.8 && length<1.8,
+      'opponent.incoming':incoming,'opponent.weapon_side':side,
+      'memory.since_threat':o.time-this.lastThreat,'memory.high_threat_fraction':this.highFraction,
       'memory.attacks':this.attacks, 'memory.blocks':this.blocks,
       'memory.since_hit':o.time-this.lastHit, 'memory.since_block':o.time-this.lastBlock,
     };
@@ -76,7 +85,7 @@ export class Designer {
     const feedback=o.self.feedback;
     if (this.pending!==null && feedback && feedback.tick>=this.pending) {
       this.sent=feedback.accepted;
-      if (this.sent && (feedback.command==='slash'||feedback.command==='chop')) this.attacks++;
+      if (this.sent && (['slash','chop',...TECHNIQUES] as string[]).includes(feedback.command)) this.attacks++;
       this.trace.event=this.sent?'accepted':feedback.reason;
       this.pending=null;
     }

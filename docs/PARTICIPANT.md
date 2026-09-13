@@ -1,80 +1,115 @@
-# Arena Combat · AI 参赛指南
+# Arena Combat · AI 战斗设计指南 0.2
 
-你是战斗设计者，不是身体控制工程师。使用游戏提供的身体、武器、碰撞与动作；只能设计招式组合和战术，不得改动游戏规则。比赛运行你的有界 JSON 设计，不在场上调用大模型。版本 `steel-design-1`，候选规则 `arena-combat-0.1-dev`。
+你设计的是打法，不是人体平衡算法。平台提供 Stick & Steel 的物理身体和定型剑招；你选择攻击线、时机、步法、防守架势、组合和局内适应。默认版本 `steel-design-2`，规则 `arena-combat-0.2-craft`。比赛只执行冻结配置，不调用大模型。
 
-## 文件和流程
+## 参赛流程
 
-在项目根目录运行 `npm run arena -- init ./my-fighter --name 我的斗士`，开始连续计时。本命令要求目录尚不存在。读取生成的 TASK.md，只修改 design.json。
+在项目根目录创建新会话，不复用旧规则的冻结作品：
 
 ```sh
+npm run arena -- init ./my-fighter --name 我的斗士
 npm run arena -- validate ./my-fighter/design.json
 npm run arena -- spar ./my-fighter/design.json examples/pressure.json --duration 30
 npm run arena -- freeze ./my-fighter
 ```
 
-冻结后返回独立提交目录，其中的 design.json 可被网页导入，或用于 CLI 对战。修改原会话文件不影响冻结副本；CLI 会核对冻结副本与规则摘要。设计时间包含试战、等待和休息，是本机开发记录，不具备防篡改竞赛计时的保证。不要把复制开发样例所花时间报告为模型设计能力。
+阅读生成的 TASK.md 和 PUBLIC_RULES.json，只编辑 design.json。冻结产生独立副本与 SHA-256；CLI 拒绝规则或内容摘要不匹配的作品。设计时间连续包含试战、休息和等待，是本机经过时间记录，不是防篡改竞赛计时。开发样例不是独立 AI 作品。
 
-## 设计结构
+## 最小设计
 
 ```json
 {
-  "version": "steel-design-1",
-  "name": "示例斗士",
-  "stance": {"guard": true, "aim": [0.18, 0.8]},
+  "version": "steel-design-2",
+  "name": "中线反击",
+  "stance": {"guard": true, "guard_pose": "high", "move": [0, 0]},
   "moves": {
-    "逼近": {"steps": [{"duration": 0.3, "action": {"move": [0.1, 0.8]}}]},
-    "反击": {"steps": [{"duration": 0.06, "action": {"guard": false, "command": "slash"}, "wait_for_idle": true}]}
+    "逼近": {"steps": [{"duration": 0.2, "action": {"move": [0.1, 0.65]}}]},
+    "封线": {"steps": [{"duration": 0.25, "action": {"guard_pose": "inside", "move": [0.2, -0.25]}}]},
+    "回刺": {"steps": [
+      {"duration": 0.06, "action": {"guard": false, "command": "thrust", "move": [0, 0.1]}, "wait_for_idle": true},
+      {"duration": 0.25, "action": {"guard": true, "guard_pose": "high", "move": [0, -0.4]}}
+    ]}
   },
   "rules": [
-    {"id": "近身出手", "when": {"all": [{"feature": "distance", "op": "lt", "value": 1.8}, {"feature": "self.can_attack", "op": "eq", "value": true}]}, "move": "反击", "cooldown": 0.6},
-    {"id": "接近对手", "when": {"feature": "distance", "op": "gt", "value": 1.5}, "move": "逼近"}
+    {"id": "格挡后反击", "when": {"all": [{"feature": "self.counter_ready", "op": "eq", "value": true}, {"feature": "self.can_attack", "op": "eq", "value": true}]}, "move": "回刺", "interrupt": true, "cooldown": 0.5},
+    {"id": "发现来袭", "when": {"feature": "opponent.incoming", "op": "eq", "value": true}, "move": "封线", "interrupt": true, "cooldown": 0.3},
+    {"id": "距离合适", "when": {"all": [{"feature": "distance", "op": "lt", "value": 1.65}, {"feature": "self.can_attack", "op": "eq", "value": true}]}, "move": "回刺", "cooldown": 1.1},
+    {"id": "接近", "when": {"feature": "distance", "op": "gt", "value": 1.5}, "move": "逼近"}
   ]
 }
 ```
 
-单个文件最多64 KiB，禁止重复键、非有限数、未知字段。最多24招，每招1至16步，最多48条规则。所有模型使用相同单手剑、标准身体和练习场；当前不允许自定义伤害、物理步长、身体和装备。
+这是语法示例，不保证获胜。丢失武器、倒地与低精力时的策略需要自己设计。最多64 KiB、24个组合、每组合16步、48条规则；禁止重复JSON键、未知字段、非有限数。
 
-## 动作层
+## 基础剑招
 
-stance 是默认持续输入；步骤 action 覆盖相应字段，不是相加。
+以下为普通单手剑的公开游戏时间，不是人体运动学标准。参数及完整目标轨迹来自 PUBLIC_RULES.json / src/arena/choreography.ts。
 
-- `move: [右向, 前向]`，各在[-1,1]，总长度由平台归一到1以内。角色按照统一身体执行器自动朝向对手；正前向接近，负前向撤退，左右分量绕侧。
-- `aim: [横向, 高低]`，各在[-1,1]，直接请求武器方向；正第二分量抬高。姿态受实际身体和武器力矩约束，不保证命中。
-- `attack: true`：持续引导武器攻击，结合 aim 和 `aim_to` 可设计自定义方向变化。
-- `guard: true`：用武器格挡，可配合移动及方向变化。不是盾牌，也不是无敌状态。attack 与 guard 不能同时为 true。
-- `interact: true`：请求原游戏的起身或拾取。不会自动由平台替你选择时机。
-- `command`：none / slash / chop / lunge / shove / pickup / drop。仅步骤可有一次性命令；同一步成功接受后不重复发出。请求可能因精力、忙碌、姿态或武器状态被拒绝，记录保留实际反馈。
-- 挥斩、下劈与 guard=true 互斥。继承 stance 的 guard 时也必须明确覆盖 false。
+| command | 名称与攻击线 | 起手 | 出剑 | 收势 | 基础精力 |
+| --- | --- | ---: | ---: | ---: | ---: |
+| cut_right | 右势横斩，持械侧横向切入 | 0.32s | 0.30s | 0.42s | 15 |
+| cut_left | 回身反斩，反方向横切 | 0.34s | 0.30s | 0.44s | 15 |
+| overhead | 高位劈斩，由上向下 | 0.42s | 0.30s | 0.48s | 19 |
+| thrust | 直线刺击，先收臂再伸出 | 0.27s | 0.27s | 0.43s | 12 |
+| low_cut | 低位切斩，降低架势切下路 | 0.36s | 0.32s | 0.46s | 17 |
 
-每步必须有 `duration`，范围[1/120,5]秒。可选 `aim_to` 会在 duration 内从本步初始 aim 线性变化到终点，身体仍受游戏的转动速度限制。`wait_for_idle` 等待自己再次具备攻击条件。默认 timeout=max(3,duration+2)，可设置到10秒；超时只放弃组合步骤，不会强行取消物理动作或跳过收势。
+每招联动持械手、武器方向、躯干扭转和俯身，通过原有有限力矩身体执行。目标轨迹不是强制传送，真实身体受关节范围、接触与受击影响，命中可能滞后于出剑阶段。伤害必须来自实际接触和上游速度/刃口/部位规则；只有已承诺且尚在执行的招式能产生兵器伤害，包含收势中的残余随动。准备、取消后和纯待机碰触不能刷伤害。步法仍由你的 move 决定，不自动追击。
 
-## 战术层
+选择招式后，任意修改 aim 或切换 guard 都不能重写已承诺的轨迹。新招在忙碌时被拒绝，不自动排队。受击反震仍可能打断。真实格挡后的0.8秒 counter_ready 窗口可以把下一招起手乘0.72，基础精力不减；窗口不保证反击命中。
 
-规则从上到下优先。在组合运行期间，只有更高优先级且 `interrupt:true` 的规则能切入。`cooldown` 从规则选中时开始计，0至60秒。招式可设 `abort_when` 放弃后续组合；原游戏已承诺的挥斩仍继续。
+`slash` 是交替横斩的兼容别名；`chop` 是 overhead 的兼容别名。推荐显式指定五种剑招。新版拒绝 `attack:true`；旧版钢设计1仅做语法兼容，其持续攻击在新规则下变成一次边沿触发横斩，必须释放后才能再触发，不能当作旧规则作品继续计分。
 
-条件支持 true/false、`all`、`any`、`not` 或 `{feature,op,value}`。op 为 lt/le/gt/ge/eq/ne；布尔值及 mode 仅 eq/ne。嵌套最多6层，条件组最多12项。
+## 防守、取消、步法
 
-公开特征：
+`stance` 是默认持续输入；步骤 action 按字段覆盖 stance，不相加。
 
-| 字段 | 含义 |
+| 字段/命令 | 语义 |
 | --- | --- |
-| time / distance / bearing | 模拟秒数、真实骨盆的平面距离（米）、对手相对方位（弧度） |
-| self.health / self.stamina | 自己生命/精力，0至100 |
-| self.mode | upright / fallen / rising / falling / hanging |
-| self.has_weapon / self.can_attack / self.can_lunge | 自己是否持械、当前动作是否可请求 |
-| self.counter_ready | 自己真实格挡反击窗口 |
-| opponent.mode / opponent.has_weapon | 对手可见姿态、是否持械 |
-| opponent.weapon_speed / opponent.weapon_height | 实际武器尖端速度（米/秒）与相对自身骨盆高度 |
-| opponent.incoming | 根据真实尖端接近速度和距离估计的威胁，不是读取未来指令 |
-| memory.attacks / memory.blocks | 自己接受的快捷攻击次数 / 作为被挡目标的武器交锋事件次数 |
-| memory.since_hit / memory.since_block | 自己距离上次受击/兵器交锋的模拟秒数，初始1000 |
+| move: [右向,前向] | 各[-1,1]，向量总长度归一到1。自动朝向当前对手是双方共用、公开的身体辅助 |
+| guard: true | 持械格挡，不能和攻击命令同时请求，不是盾牌或无敌 |
+| guard_pose | high / inside / outside / low。选取固定高、内、外、低架势，仍需要时机与距离；不替你自动选择正确方向 |
+| aim: [横向,高低] | 各[-1,1]。用于非命名格挡方向、待机、下一次收势目标；guard_pose在guard=true时优先。不能在已承诺攻击途中任意改轨迹 |
+| crouch: [0,1] | 统一降低架势，最大额外降低0.22m，目标变化率0.9m/s，并降低移动速度；改变真实受击位置，不获得无敌 |
+| command: feint | 仅在起手前85%内且精力足够时取消，额外花4精力，保留原消耗并经历0.32s收势。绝不能取消已出剑攻击 |
+| command: lunge | 前向短突进，18精力、0.24s执行、0.85s共享冷却；仍受实际身体、碰撞和姿态限制 |
+| command: backstep | 快速后撤，14精力、0.20s执行、0.75s共享冷却；可配合攻击但不取消其承诺 |
+| interact: true / pickup | 请求起身/拾取。原动作执行方式保留，不由平台主动替你决定 |
+| shove / drop | 原推击/丢弃武器；推击必须实际靠近、空出手且有精力，不保证成功 |
 
-没有对手私有生命、精力或未来输入；也不能读取仿真对象、文件系统和网络。运行时没有 eval 或任意用户代码。所有策略记忆每局重置。
+普通移动目标速度1.55m/s，持械格挡时1.05m/s，受击与降低姿态会减慢。冲刺附加目标速度2.6m/s，而不是位置瞬移。低位架势在特定对照中可改变低斩暴露，但不等于每一次都发生兵器格挡；一次没有受伤也可能是对方挥空。不要把任何防守姿态理解成克制关系表里的必胜按钮。
 
-## 战斗与观察边界
+## 组合执行
 
-原游戏使用120 Hz Rapier固定步进，策略每6个物理步（20 Hz）决策。两方同一 tick 观察，收齐输入再推进。双方都使用外部控制与相同玩家动作参数，内置机器人不参与；原有自动朝向、身体平衡、武器握持辅助公开且对双方相同。
+一步的 `duration` 在[1/120,5]秒，可有 `action`、`aim_to`、`wait_for_idle`、`timeout`。`aim_to` 在duration内改变待机/格挡方向，不覆盖定型招式轨迹。`wait_for_idle` 实际等待自己恢复到可攻击状态，精力不足也会继续等。默认timeout=max(3,duration+2)，最多10秒。
 
-无通用蹲避指令或盾牌。拾取/起身时出现的低姿态不等于可以自由蹲避。默认30秒，最多60秒；时间到判平，不按剩余生命偷偷判胜。继承上游受击、握持和失能规则，不是无辅助人体模拟。上游物理接触事件顺序等尚未通过充分竞争公平性审计，当前不进行正式跨模型排名。
+同一步的一次性命令被内核接受后不会重复发送。拒绝可重试，超时只放弃组合步骤，不改写物理状态。优先级打断与abort_when也只改变后续策略，不自动取消已承诺攻击；佯攻必须显式发送feint。
 
-每场导出完整设计、实际观察、动作、接受/拒绝反馈、战术选择、接触事件、姿态帧和结果。回放不会重新决定胜负。浏览器暂停也会暂停这场本机开发对局，隐藏页面自动暂停；正式无人值守测试使用 CLI。开发样例用于验证平台能力，不代表独立 AI 成绩。
+例如：overhead起手0.14秒（不要wait_for_idle）→ feint并wait_for_idle → 侧移后thrust。实际选中或取消都可能失败，需要检查反馈。
+
+## 战术与公开特征
+
+规则从上到下优先，只有更高优先级且interrupt=true的规则能打断正在进行的组合。cooldown从选中开始计；每招可有abort_when。条件为布尔值、all/any/not，或{feature,op,value}；最多六层，每组12项。数值比较lt/le/gt/ge/eq/ne，布尔/姿态仅eq/ne。
+
+| 特征 | 含义 |
+| --- | --- |
+| time / distance / bearing | 模拟时间、实际骨盆平面距离、对手相对方位 |
+| self.health / self.stamina / self.mode | 自己资源与upright/fallen/rising/falling/hanging状态 |
+| self.has_weapon / self.can_attack / self.can_lunge / self.can_backstep | 自己持械与当前可请求状态；can_attack以最便宜剑招计算，重招仍可能因精力不足拒绝 |
+| self.can_feint / self.is_windup / self.is_recovering / self.attack_progress | 自己当前剑招能否取消、阶段、整个招式进度[0,1] |
+| self.counter_ready | 原内核真实格挡后的反击窗口 |
+| opponent.mode / opponent.has_weapon | 对手可见身体与持械状态 |
+| opponent.weapon_speed / opponent.weapon_height / opponent.weapon_side | 实际剑尖速度、相对自身骨盆高度、自己局部右方向上的剑尖坐标 |
+| opponent.incoming | 尖端向自身接近速度>0.8m/s且三维距离<1.8m的估计，不读取未来指令 |
+| memory.attacks / memory.blocks | 自己被接受的剑招次数 / 作为目标的兵器交锋事件次数；blocks不是保证每次都是成功格挡 |
+| memory.since_hit / memory.since_block / memory.since_threat | 距上次自己受击/兵器交锋/估计威胁的模拟时间 |
+| memory.high_threat_fraction | 来袭时尖端高于自身骨盆0.4m的指数平滑比例，初值0.5，每次来袭观察更新10% |
+
+不提供对手私有生命、精力、未来招式或仿真对象，不运行用户代码、网络、文件系统或eval。记忆每局重置。结构化配置的条件和组合有界，不是任意机器学习程序。
+
+## 观察与赛果
+
+原Rapier身体120Hz，策略20Hz，双方读取同tick观察后提交动作。默认30秒、最多60秒；超时平局，不按剩余生命偷偷判胜。上游自动朝向、握持、恢复辅助公开对称；平台不会选择最佳格挡方向、追击或招式。
+
+姿态帧含实际招式/阶段元数据，每4步保存；画面和碰撞同源。终局之后最多1.5秒物理收尾单独保存在presentationFrames，不继续策略或改变赛果/竞争帧。回放可以查看这段落地，但不是新的比赛时间。
+
+本版本只面向桌面。动作实验室是明确标注的开发输入测试，不是AI作品或排名。浏览器可暂停且隐藏页面暂停，无人值守使用CLI。跨浏览器/Node逐位复现、所有接触顺序/同时失能公平性、更多对手平衡和独立模型验收尚未完成；本版本不发布正式跨模型总榜。

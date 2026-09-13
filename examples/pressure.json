@@ -1,38 +1,25 @@
 {
-  "version": "steel-design-1",
-  "name": "赤锋 · 前压",
-  "description": "开发样例，不是独立模型作品。持续接近、挥斩和短突进，精力不足时撤出。",
+  "version": "steel-design-2",
+  "name": "赤锋 · 换线压迫",
+  "description": "开发对照样例，展示不同招式与战术；不是独立 AI 作品或预设胜负。",
   "stance": {
     "move": [
-      0.08,
+      0,
       0
     ],
     "aim": [
       0.18,
       0.8
     ],
-    "guard": true
+    "guard": true,
+    "guard_pose": "high",
+    "crouch": 0
   },
   "moves": {
     "起身": {
       "steps": [
         {
-          "duration": 0.7,
-          "action": {
-            "move": [
-              0,
-              0
-            ],
-            "guard": false,
-            "interact": true
-          }
-        }
-      ]
-    },
-    "捡武器": {
-      "steps": [
-        {
-          "duration": 1,
+          "duration": 0.65,
           "action": {
             "move": [
               0,
@@ -40,101 +27,152 @@
             ],
             "guard": false,
             "attack": false,
-            "interact": true,
-            "command": "pickup"
+            "crouch": 0,
+            "interact": true
           }
         }
       ]
     },
-    "撤步恢复": {
+    "重新持械": {
       "steps": [
         {
           "duration": 0.8,
           "action": {
             "move": [
-              -0.15,
-              -0.9
+              0,
+              0
             ],
-            "guard": true,
-            "attack": false
+            "guard": false,
+            "attack": false,
+            "crouch": 0,
+            "command": "pickup",
+            "interact": true
           }
         }
-      ],
-      "abort_when": {
-        "feature": "self.stamina",
-        "op": "gt",
-        "value": 75
-      }
+      ]
     },
-    "逼近": {
+    "恢复架势": {
+      "steps": [
+        {
+          "duration": 0.6,
+          "action": {
+            "move": [
+              0.15,
+              -0.65
+            ],
+            "guard": true,
+            "attack": false,
+            "crouch": 0,
+            "guard_pose": "outside"
+          }
+        }
+      ]
+    },
+    "接近": {
       "steps": [
         {
           "duration": 0.25,
           "action": {
             "move": [
               0.12,
-              0.8
-            ],
-            "guard": true,
-            "attack": false
-          }
-        }
-      ]
-    },
-    "高位格挡": {
-      "steps": [
-        {
-          "duration": 0.25,
-          "action": {
-            "move": [
-              -0.3,
-              -0.15
+              0.65
             ],
             "guard": true,
             "attack": false,
-            "aim": [
-              0.18,
-              0.8
-            ]
+            "crouch": 0,
+            "guard_pose": "high"
           }
         }
       ]
     },
-    "斜线格挡": {
+    "退出贴身": {
       "steps": [
         {
           "duration": 0.3,
           "action": {
             "move": [
-              0.3,
-              0
+              -0.25,
+              -0.85
             ],
             "guard": true,
             "attack": false,
-            "aim": [
-              -0.5,
-              0.5
-            ]
-          },
-          "aim_to": [
-            0.2,
-            0.8
-          ]
+            "crouch": 0,
+            "guard_pose": "inside"
+          }
         }
       ]
     },
-    "切入挥斩": {
+    "直刺收剑": {
       "steps": [
         {
-          "duration": 0.06,
+          "duration": 0.08,
           "action": {
+            "move": [
+              0,
+              0.08
+            ],
             "guard": false,
             "attack": false,
+            "crouch": 0,
+            "command": "thrust"
+          },
+          "wait_for_idle": true
+        },
+        {
+          "duration": 0.22,
+          "action": {
             "move": [
-              0.08,
-              0
+              0.1,
+              -0.3
             ],
-            "command": "slash"
+            "guard": true,
+            "attack": false,
+            "crouch": 0,
+            "guard_pose": "inside"
+          }
+        }
+      ]
+    },
+    "横斩换侧": {
+      "steps": [
+        {
+          "duration": 0.08,
+          "action": {
+            "move": [
+              0,
+              0.08
+            ],
+            "guard": false,
+            "attack": false,
+            "crouch": 0,
+            "command": "cut_right"
+          },
+          "wait_for_idle": true
+        },
+        {
+          "duration": 0.15,
+          "action": {
+            "move": [
+              0.25,
+              -0.2
+            ],
+            "guard": true,
+            "attack": false,
+            "crouch": 0,
+            "guard_pose": "outside"
+          }
+        },
+        {
+          "duration": 0.08,
+          "action": {
+            "move": [
+              0,
+              0.08
+            ],
+            "guard": false,
+            "attack": false,
+            "crouch": 0,
+            "command": "cut_left"
           },
           "wait_for_idle": true
         },
@@ -142,101 +180,186 @@
           "duration": 0.2,
           "action": {
             "move": [
-              -0.25,
-              -0.25
+              -0.1,
+              -0.35
             ],
-            "guard": true
+            "guard": true,
+            "attack": false,
+            "crouch": 0,
+            "guard_pose": "high"
           }
         }
       ]
     },
-    "下劈": {
+    "高起低切": {
       "steps": [
         {
-          "duration": 0.06,
-          "action": {
-            "guard": false,
-            "attack": false,
-            "move": [
-              -0.1,
-              0
-            ],
-            "command": "chop"
-          },
-          "wait_for_idle": true
-        }
-      ]
-    },
-    "短突进": {
-      "steps": [
-        {
-          "duration": 0.24,
+          "duration": 0.08,
           "action": {
             "move": [
               0,
-              0.4
+              0.08
             ],
             "guard": false,
             "attack": false,
+            "crouch": 0,
+            "command": "overhead"
+          },
+          "wait_for_idle": true
+        },
+        {
+          "duration": 0.22,
+          "action": {
+            "move": [
+              -0.2,
+              -0.15
+            ],
+            "guard": true,
+            "attack": false,
+            "crouch": 0,
+            "guard_pose": "high"
+          }
+        },
+        {
+          "duration": 0.08,
+          "action": {
+            "move": [
+              0,
+              0.08
+            ],
+            "guard": false,
+            "attack": false,
+            "crouch": 0,
+            "command": "low_cut"
+          },
+          "wait_for_idle": true
+        },
+        {
+          "duration": 0.25,
+          "action": {
+            "move": [
+              0.15,
+              -0.3
+            ],
+            "guard": true,
+            "attack": false,
+            "crouch": 0,
+            "guard_pose": "outside"
+          }
+        }
+      ]
+    },
+    "佯劈转刺": {
+      "steps": [
+        {
+          "duration": 0.14,
+          "action": {
+            "move": [
+              0,
+              0
+            ],
+            "guard": false,
+            "attack": false,
+            "crouch": 0,
+            "command": "overhead"
+          }
+        },
+        {
+          "duration": 0.08,
+          "action": {
+            "move": [
+              0,
+              0
+            ],
+            "guard": false,
+            "attack": false,
+            "crouch": 0,
+            "command": "feint"
+          }
+        },
+        {
+          "duration": 0.05,
+          "action": {
+            "move": [
+              0,
+              0
+            ],
+            "guard": true,
+            "attack": false,
+            "crouch": 0,
+            "guard_pose": "inside"
+          },
+          "wait_for_idle": true
+        },
+        {
+          "duration": 0.08,
+          "action": {
+            "move": [
+              -0.18,
+              0.22
+            ],
+            "guard": false,
+            "attack": false,
+            "crouch": 0,
+            "command": "thrust"
+          },
+          "wait_for_idle": true
+        },
+        {
+          "duration": 0.22,
+          "action": {
+            "move": [
+              0.15,
+              -0.25
+            ],
+            "guard": true,
+            "attack": false,
+            "crouch": 0,
+            "guard_pose": "high"
+          }
+        }
+      ]
+    },
+    "突进直刺": {
+      "steps": [
+        {
+          "duration": 0.16,
+          "action": {
+            "move": [
+              0,
+              0.1
+            ],
+            "guard": false,
+            "attack": false,
+            "crouch": 0,
             "command": "lunge"
           }
         },
         {
-          "duration": 0.06,
+          "duration": 0.08,
           "action": {
+            "move": [
+              0,
+              0.08
+            ],
             "guard": false,
             "attack": false,
-            "command": "slash"
+            "crouch": 0,
+            "command": "thrust"
           },
           "wait_for_idle": true
-        }
-      ]
-    },
-    "自由挥动": {
-      "steps": [
-        {
-          "duration": 0.25,
-          "action": {
-            "guard": false,
-            "attack": true,
-            "aim": [
-              -0.85,
-              0.75
-            ],
-            "move": [
-              0.2,
-              0.1
-            ]
-          },
-          "aim_to": [
-            0.8,
-            0.05
-          ]
         },
         {
           "duration": 0.35,
           "action": {
-            "guard": true,
-            "attack": false,
             "move": [
-              0,
-              -0.4
-            ]
-          }
-        }
-      ]
-    },
-    "拉开距离": {
-      "steps": [
-        {
-          "duration": 0.3,
-          "action": {
-            "move": [
-              0.12,
-              -0.9
+              0.2,
+              -0.7
             ],
             "guard": true,
-            "attack": false
+            "attack": false,
+            "crouch": 0,
+            "guard_pose": "outside"
           }
         }
       ]
@@ -244,7 +367,7 @@
   },
   "rules": [
     {
-      "id": "倒地后起身",
+      "id": "倒地恢复",
       "when": {
         "feature": "self.mode",
         "op": "eq",
@@ -254,40 +377,89 @@
       "interrupt": true
     },
     {
-      "id": "重新持械",
+      "id": "捡回武器",
       "when": {
         "feature": "self.has_weapon",
         "op": "eq",
         "value": false
       },
-      "move": "捡武器",
+      "move": "重新持械",
       "interrupt": true,
-      "cooldown": 1.2
+      "cooldown": 0.8
     },
     {
-      "id": "精力恢复",
+      "id": "保存精力",
       "when": {
         "feature": "self.stamina",
         "op": "lt",
-        "value": 26
+        "value": 23
       },
-      "move": "撤步恢复",
+      "move": "恢复架势",
       "interrupt": true,
-      "cooldown": 1
+      "cooldown": 0.5
     },
     {
-      "id": "避免贴身挤压",
+      "id": "退出无效贴身",
       "when": {
-        "feature": "distance",
-        "op": "lt",
-        "value": 1.25
+        "all": [
+          {
+            "feature": "distance",
+            "op": "lt",
+            "value": 1.05
+          },
+          {
+            "feature": "self.can_attack",
+            "op": "eq",
+            "value": true
+          }
+        ]
       },
-      "move": "拉开距离",
+      "move": "退出贴身",
       "interrupt": true,
-      "cooldown": 0.3
+      "cooldown": 0.35
     },
     {
-      "id": "近距挥斩",
+      "id": "近距换线",
+      "when": {
+        "all": [
+          {
+            "feature": "distance",
+            "op": "lt",
+            "value": 1.75
+          },
+          {
+            "feature": "self.can_attack",
+            "op": "eq",
+            "value": true
+          }
+        ]
+      },
+      "move": "横斩换侧",
+      "cooldown": 2.4,
+      "interrupt": false
+    },
+    {
+      "id": "高低连段",
+      "when": {
+        "all": [
+          {
+            "feature": "distance",
+            "op": "lt",
+            "value": 1.7
+          },
+          {
+            "feature": "self.can_attack",
+            "op": "eq",
+            "value": true
+          }
+        ]
+      },
+      "move": "高起低切",
+      "cooldown": 3.4,
+      "interrupt": false
+    },
+    {
+      "id": "试探后换直线",
       "when": {
         "all": [
           {
@@ -302,22 +474,43 @@
           }
         ]
       },
-      "move": "切入挥斩",
-      "cooldown": 0.4
+      "move": "佯劈转刺",
+      "cooldown": 3,
+      "interrupt": false
     },
     {
-      "id": "中距突进",
+      "id": "直线压迫",
+      "when": {
+        "all": [
+          {
+            "feature": "distance",
+            "op": "lt",
+            "value": 1.9
+          },
+          {
+            "feature": "self.can_attack",
+            "op": "eq",
+            "value": true
+          }
+        ]
+      },
+      "move": "直刺收剑",
+      "cooldown": 1.1,
+      "interrupt": false
+    },
+    {
+      "id": "突进占距",
       "when": {
         "all": [
           {
             "feature": "distance",
             "op": "gt",
-            "value": 2.3
+            "value": 2.4
           },
           {
             "feature": "distance",
             "op": "lt",
-            "value": 2.8
+            "value": 3.0
           },
           {
             "feature": "self.can_lunge",
@@ -326,18 +519,20 @@
           }
         ]
       },
-      "move": "短突进",
-      "cooldown": 1.7
+      "move": "突进直刺",
+      "cooldown": 3,
+      "interrupt": false
     },
     {
-      "id": "持续接近",
+      "id": "追踪交战距离",
       "when": {
         "feature": "distance",
         "op": "gt",
-        "value": 1.45
+        "value": 1.6
       },
-      "move": "逼近",
-      "cooldown": 0.25
+      "move": "接近",
+      "cooldown": 0.25,
+      "interrupt": false
     }
   ]
 }

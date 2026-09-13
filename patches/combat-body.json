@@ -1,0 +1,43 @@
+{
+  "description": "Shared bounded torso target for authored strikes; not AI joint control.",
+  "source": "lib/rig/physics.ts",
+  "source_sha256": "f610c3fbe36410e56b6c4d5c1353c06fdcbab30923e70eaf12194662b84ec67a",
+  "changes": [
+    {
+      "before": "  stanceHeight = .95;",
+      "after": "  stanceHeight = .95;\n  combatLean = .06;\n  combatTwist = 0;"
+    },
+    {
+      "before": "    this.lean += (definition.lean - this.lean) * blend;",
+      "after": "    this.lean += ((this.options.combat ? this.combatLean : definition.lean) - this.lean) * blend;"
+    },
+    {
+      "before": "const shoulder = chest.clone().add(vec([sign * .21, 0, 0]));",
+      "after": "const shoulder = chest.clone().add(vec([sign * .21, 0, 0]).applyAxisAngle(vec([0,1,0]),this.options.combat?this.combatTwist:0));"
+    },
+    {
+      "before": "const chestRotation = new Quaternion().setFromAxisAngle(vec([1, 0, 0]), this.lean);",
+      "after": "const chestRotation = new Quaternion().setFromAxisAngle(vec([1, 0, 0]), this.lean).multiply(new Quaternion().setFromAxisAngle(vec([0,1,0]),this.options.combat?this.combatTwist:0));"
+    },
+    {
+      "before": "    assign('spine', p.hip, p.waist); assign('chest', p.waist, p.chest);",
+      "after": "    const torsoFrame=(fraction:number)=>new Quaternion().setFromAxisAngle(vec([1,0,0]),this.lean).multiply(new Quaternion().setFromAxisAngle(vec([0,1,0]),this.options.combat?this.combatTwist*fraction:0));\n    assign('spine', p.hip, p.waist,torsoFrame(.4)); assign('chest', p.waist, p.chest,torsoFrame(1));"
+    },
+    {
+      "before": "  combatLean = .06;",
+      "after": "  combatCraft = false;\n  combatLean = .06;"
+    },
+    {
+      "before": "    this.updateGoals(1 - Math.exp(-8 * STEP));",
+      "after": "    this.updateGoals(1 - Math.exp(-(this.combatCraft?24:8) * STEP));"
+    },
+    {
+      "before": "(part.shape === 'hand' ? 3 : 5) * STEP",
+      "after": "(this.combatCraft ? 14 : part.shape === 'hand' ? 3 : 5) * STEP"
+    },
+    {
+      "before": "(isCore ? 45 : 9) * limbStrength",
+      "after": "(isCore ? 45 : this.combatCraft ? 14 : 9) * limbStrength"
+    }
+  ]
+}

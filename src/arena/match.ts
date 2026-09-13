@@ -5,13 +5,14 @@ import {clone,type Action,type Feedback,type Trace,type Observation} from './typ
 import {ENGINE_HASH} from '../generated/build';
 export type DecisionRecord={tick:number;observations:[Observation,Observation];actions:[Action,Action];feedback:[Feedback,Feedback];traces:Trace[]};
 export type Outcome={status:'completed'|'void';winner:0|1|null;reason:string;tick:number;time:number};
-export type Archive={version:'arena-record-1';engineHash:string;rules:typeof RULES;designs:unknown[];duration:number;decisions:DecisionRecord[];frames:Frame[];events:ContactEvent[];outcome:Outcome|null;computeMs:number};
+export type Archive={version:'arena-record-1';engineHash:string;rules:typeof RULES;designs:unknown[];duration:number;decisions:DecisionRecord[];frames:Frame[];events:ContactEvent[];outcome:Outcome|null;computeMs:number;presentationFrames?:Frame[]};
 /** Trusted match driver. Policy observations are captured before either policy acts. */
 export class Match {
   readonly engine:ArenaEngine;
   readonly designers:[Designer,Designer];
   readonly archive:Archive;
   private limit:number;
+  private presentationTick=0;
   constructor(a:unknown,b:unknown,duration=30){
     if(!Number.isFinite(duration)||duration<1||duration>RULES.maxDuration)throw new Error('duration must be within 1..60 seconds');
     this.designers=[new Designer(a),new Designer(b)];
@@ -39,6 +40,18 @@ export class Match {
     return !this.archive.outcome;
   }
   private finish(status:Outcome['status'],winner:Outcome['winner'],reason:string){this.archive.outcome={status,winner,reason,tick:this.engine.tick,time:this.engine.tick*STEP};this.archive.events=clone(this.engine.events);}
-  run(){while(this.step());return this.archive;}
+  /** Bounded post-result physics for the fall. Never reopens decisions or scoring. */
+  postrollStep():boolean {
+    if(!this.archive.outcome||this.archive.outcome.status==='void'||this.presentationTick>=180)return false;
+    const sim=this.engine.simulation;
+    sim.phase='finished';sim.clearInput(0);sim.clearInput(1);
+    sim.step();this.presentationTick++;
+    if(this.presentationTick%RULES.replaySteps===0){
+      const frame=this.engine.frame();frame.tick=this.archive.outcome.tick+this.presentationTick;frame.time=frame.tick*STEP;
+      (this.archive.presentationFrames??=[]).push(frame);
+    }
+    return this.presentationTick<180;
+  }
+  run(){while(this.step());while(this.postrollStep());return this.archive;}
   dispose(){this.engine.dispose();}
 }

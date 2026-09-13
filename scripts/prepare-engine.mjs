@@ -10,11 +10,14 @@ for(const [path,digest] of Object.entries(lock.files)) {
 }
 const base=resolve(root,'vendor/stick-steel'),dest=resolve(root,'.engine/stick-steel');
 mkdirSync(dest,{recursive:true});cpSync(base+'/lib',dest+'/lib',{recursive:true});
-const patch=JSON.parse(readFileSync(resolve(root,'patches/external-control.json'),'utf8'));
-let text=readFileSync(resolve(base,patch.source),'utf8');
-if(sha(text)!==patch.source_sha256)throw new Error('Unexpected engine source');
-for(const c of patch.changes){if(text.split(c.before).length!==2)throw new Error('Patch must match exactly once');text=text.replace(c.before,c.after);}
-writeFileSync(resolve(dest,patch.source),text);
+for(const name of ['external-control','combat-craft','combat-body']) {
+  const patch=JSON.parse(readFileSync(resolve(root,'patches/'+name+'.json'),'utf8'));
+  let text=readFileSync(resolve(dest,patch.source),'utf8');
+  if(sha(text)!==patch.source_sha256)throw new Error('Unexpected engine source for '+name);
+  for(const c of patch.changes){if(text.split(c.before).length!==2)throw new Error('Patch must match exactly once: '+name);text=text.replace(c.before,c.after);}
+  writeFileSync(resolve(dest,patch.source),text);
+}
+cpSync(resolve(root,'src/arena/choreography.ts'),resolve(dest,'lib/duel/choreography.ts'));
 const hash=createHash('sha256');
 function add(path){const abs=resolve(root,path);for(const e of readdirSync(abs,{withFileTypes:true}).sort((a,b)=>a.name.localeCompare(b.name))){const p=path+'/'+e.name;if(e.isDirectory()){if(e.name!=='generated')add(p);}else if(e.name.endsWith('.ts')||e.name.endsWith('.json')){hash.update(p+'\0');hash.update(readFileSync(resolve(root,p)));}}}
 for(const path of ['src/arena','src/engine','patches'])add(path);
