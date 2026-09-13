@@ -1,6 +1,6 @@
 {
   "name": "arena-combat",
-  "version": "0.1.0-dev",
+  "version": "0.2.0-dev",
   "private": true,
   "type": "module",
   "license": "MIT",
@@ -14,7 +14,8 @@
     "preview": "vite preview",
     "test": "node scripts/prepare-engine.mjs && tsx --test tests/unit/*.test.ts tests/integration/*.test.ts",
     "test:upstream": "tsx --test vendor/stick-steel/tests/duel.test.ts",
-    "arena": "node scripts/prepare-engine.mjs && tsx src/cli.ts"
+    "arena": "node scripts/prepare-engine.mjs && tsx src/cli.ts",
+    "test:combat": "node scripts/prepare-engine.mjs && tsx scripts/validate-combat-craft.ts"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "0.19.0",

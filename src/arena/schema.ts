@@ -1,3 +1,4 @@
+import {TECHNIQUES,GUARDS} from './choreography';
 import {FEATURES, type ActionPatch, type Condition, type Design, type Feature, clone, deepFreeze} from './types';
 export const MAX_DESIGN_BYTES = 65536;
 export class DesignError extends Error { override name = 'DesignError'; }
@@ -18,15 +19,17 @@ function text(v: unknown, p: string, limit=80) {
   if (['__proto__','constructor','prototype'].includes(v as string)) fail(p,'保留标识');
 }
 export function validateAction(v: unknown, p='action'): asserts v is ActionPatch {
-  const a = object(v,['move','aim','attack','guard','interact','command'],[],p);
+  const a = object(v,['move','aim','attack','guard','interact','command','guard_pose','crouch'],[],p);
   for (const k of ['move','aim']) if (k in a) {
     if (!Array.isArray(a[k]) || a[k].length !== 2) fail(`${p}.${k}`,'要求两个数');
     a[k].forEach((x: unknown,i: number) => num(x,-1,1,`${p}.${k}[${i}]`));
   }
   for (const k of ['attack','guard','interact']) if (k in a && typeof a[k] !== 'boolean') fail(`${p}.${k}`,'要求布尔值');
+  if(a.guard_pose!==undefined && (typeof a.guard_pose!=='string'||!Object.hasOwn(GUARDS,a.guard_pose)))fail(p+'.guard_pose','未知架势');
+  if(a.crouch!==undefined)num(a.crouch,0,1,p+'.crouch');
   if (a.attack && a.guard) fail(p,'不能同时请求持续攻击和格挡');
-  if (a.command !== undefined && !['none','slash','chop','lunge','shove','pickup','drop'].includes(a.command)) fail(`${p}.command`,'未知动作命令');
-  if (a.guard && ['slash','chop'].includes(a.command)) fail(p,'挥斩与格挡互斥');
+  if (a.command !== undefined && !['none','slash','chop','lunge','shove','pickup','drop','feint','backstep',...TECHNIQUES].includes(a.command)) fail(`${p}.command`,'未知动作命令');
+  if (a.guard && ['slash','chop',...TECHNIQUES].includes(a.command)) fail(p,'挥斩与格挡互斥');
 }
 export function validateCondition(v: unknown, p='condition', depth=0): asserts v is Condition {
   if (depth>6) fail(p,'条件嵌套超过六层');
@@ -54,10 +57,11 @@ export function validateDesign(v: unknown): Readonly<Design> {
   try {raw=JSON.stringify(v);} catch {return fail('design','无法序列化');}
   if (typeof raw !== 'string' || new TextEncoder().encode(raw).length>MAX_DESIGN_BYTES) fail('design','文件超过64 KiB');
   const d = object(v,['version','name','description','stance','moves','rules'],['version','name','stance','moves','rules'],'design');
-  if (d.version !== 'steel-design-1') fail('version','要求 steel-design-1');
+  if (!['steel-design-1','steel-design-2'].includes(d.version)) fail('version','要求 steel-design-2 或旧版 steel-design-1');
   text(d.name,'name');
   if ('description' in d && (typeof d.description !== 'string' || d.description.length>2000)) fail('description','要求2000字符以内文本');
   validateAction(d.stance,'stance');
+  if(d.version==='steel-design-2' && d.stance.attack)fail('stance.attack','新版使用有承诺的命名招式，不使用持续攻击');
   if (d.stance.command && d.stance.command!=='none') fail('stance.command','一次性命令只能放在招式步骤');
   const moves=object(d.moves,Object.keys(d.moves ?? {}),[],'moves');
   if (Object.keys(moves).length<1 || Object.keys(moves).length>24) fail('moves','要求1到24招');
@@ -71,6 +75,7 @@ export function validateDesign(v: unknown): Readonly<Design> {
       if ('timeout' in s) num(s.timeout,s.duration,10,p+'.timeout');
       if ('wait_for_idle' in s && typeof s.wait_for_idle!=='boolean') fail(p,'wait_for_idle 要求布尔值');
       validateAction(s.action ?? {},p+'.action');
+      if(d.version==='steel-design-2' && s.action?.attack)fail(p+'.attack','新版使用命名招式；不允许持续攻击绕过起手与收势');
       // Validate the effective action, not just the patch.
       validateAction({...d.stance,...s.action},p+'.merged_action');
       if (s.aim_to!==undefined) validateAction({aim:s.aim_to},p+'.aim_to');

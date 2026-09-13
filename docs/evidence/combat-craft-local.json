@@ -1,0 +1,456 @@
+{
+  "engineHash": "3a66e7ebd8c5a6a7b07f97f4a03810289417af5ba9cc58da50d14be130951afe",
+  "runtime": {
+    "node": "v22.16.0",
+    "platform": "linux",
+    "arch": "x64"
+  },
+  "note": "Developer fixtures only. Health difference can include severing/bleeding. A miss is not proof of a weapon parry. Fixed placement trials do not establish a universal matchup advantage.",
+  "trials": [
+    {
+      "technique": "cut_right",
+      "defense": "open",
+      "health": 75.89755414862809,
+      "headHeight": 1.7474960088729858,
+      "hits": 2,
+      "parries": 0,
+      "weaponContacts": 0
+    },
+    {
+      "technique": "cut_right",
+      "defense": "high",
+      "health": 80.90731680093725,
+      "headHeight": 1.7062352895736694,
+      "hits": 1,
+      "parries": 0,
+      "weaponContacts": 0
+    },
+    {
+      "technique": "cut_right",
+      "defense": "inside",
+      "health": 80.50677658960004,
+      "headHeight": 1.6915812492370605,
+      "hits": 1,
+      "parries": 0,
+      "weaponContacts": 0
+    },
+    {
+      "technique": "cut_right",
+      "defense": "outside",
+      "health": 81.94914311215625,
+      "headHeight": 1.7117315530776978,
+      "hits": 1,
+      "parries": 0,
+      "weaponContacts": 0
+    },
+    {
+      "technique": "cut_right",
+      "defense": "low",
+      "health": 79.49904062939837,
+      "headHeight": 1.7133886814117432,
+      "hits": 1,
+      "parries": 0,
+      "weaponContacts": 0
+    },
+    {
+      "technique": "cut_right",
+      "defense": "duck",
+      "health": 89.5223627408133,
+      "headHeight": 1.5244864225387573,
+      "hits": 1,
+      "parries": 0,
+      "weaponContacts": 0
+    },
+    {
+      "technique": "cut_right",
+      "defense": "retreat",
+      "health": 100,
+      "headHeight": 1.7474960088729858,
+      "hits": 0,
+      "parries": 0,
+      "weaponContacts": 0
+    },
+    {
+      "technique": "cut_left",
+      "defense": "open",
+      "health": 96.40635165479067,
+      "headHeight": 1.7474960088729858,
+      "hits": 1,
+      "parries": 0,
+      "weaponContacts": 0
+    },
+    {
+      "technique": "cut_left",
+      "defense": "high",
+      "health": 96.98490815055486,
+      "headHeight": 1.7062352895736694,
+      "hits": 1,
+      "parries": 0,
+      "weaponContacts": 0
+    },
+    {
+      "technique": "cut_left",
+      "defense": "inside",
+      "health": 100,
+      "headHeight": 1.6915812492370605,
+      "hits": 0,
+      "parries": 1,
+      "weaponContacts": 1
+    },
+    {
+      "technique": "cut_left",
+      "defense": "outside",
+      "health": 96.35270972012786,
+      "headHeight": 1.7117315530776978,
+      "hits": 1,
+      "parries": 0,
+      "weaponContacts": 0
+    },
+    {
+      "technique": "cut_left",
+      "defense": "low",
+      "health": 89.76342682747655,
+      "headHeight": 1.7133886814117432,
+      "hits": 1,
+      "parries": 0,
+      "weaponContacts": 0
+    },
+    {
+      "technique": "cut_left",
+      "defense": "duck",
+      "health": 92.88165117516677,
+      "headHeight": 1.5244864225387573,
+      "hits": 1,
+      "parries": 0,
+      "weaponContacts": 0
+    },
+    {
+      "technique": "cut_left",
+      "defense": "retreat",
+      "health": 100,
+      "headHeight": 1.7474960088729858,
+      "hits": 0,
+      "parries": 0,
+      "weaponContacts": 0
+    },
+    {
+      "technique": "overhead",
+      "defense": "open",
+      "health": 88.78820153435203,
+      "headHeight": 1.7474960088729858,
+      "hits": 1,
+      "parries": 0,
+      "weaponContacts": 0
+    },
+    {
+      "technique": "overhead",
+      "defense": "high",
+      "health": 100,
+      "headHeight": 1.7062352895736694,
+      "hits": 0,
+      "parries": 1,
+      "weaponContacts": 1
+    },
+    {
+      "technique": "overhead",
+      "defense": "inside",
+      "health": 90.11627749229316,
+      "headHeight": 1.6915812492370605,
+      "hits": 1,
+      "parries": 0,
+      "weaponContacts": 0
+    },
+    {
+      "technique": "overhead",
+      "defense": "outside",
+      "health": 87.93589709523535,
+      "headHeight": 1.7117315530776978,
+      "hits": 1,
+      "parries": 0,
+      "weaponContacts": 0
+    },
+    {
+      "technique": "overhead",
+      "defense": "low",
+      "health": 100,
+      "headHeight": 1.7133886814117432,
+      "hits": 0,
+      "parries": 0,
+      "weaponContacts": 0
+    },
+    {
+      "technique": "overhead",
+      "defense": "duck",
+      "health": 87.1408036904715,
+      "headHeight": 1.5244864225387573,
+      "hits": 1,
+      "parries": 0,
+      "weaponContacts": 0
+    },
+    {
+      "technique": "overhead",
+      "defense": "retreat",
+      "health": 100,
+      "headHeight": 1.7474960088729858,
+      "hits": 0,
+      "parries": 0,
+      "weaponContacts": 0
+    },
+    {
+      "technique": "thrust",
+      "defense": "open",
+      "health": 91.7103797630933,
+      "headHeight": 1.747493028640747,
+      "hits": 1,
+      "parries": 0,
+      "weaponContacts": 0
+    },
+    {
+      "technique": "thrust",
+      "defense": "high",
+      "health": 100,
+      "headHeight": 1.7062259912490845,
+      "hits": 0,
+      "parries": 0,
+      "weaponContacts": 0
+    },
+    {
+      "technique": "thrust",
+      "defense": "inside",
+      "health": 100,
+      "headHeight": 1.6984288692474365,
+      "hits": 0,
+      "parries": 1,
+      "weaponContacts": 1
+    },
+    {
+      "technique": "thrust",
+      "defense": "outside",
+      "health": 91.42669692036208,
+      "headHeight": 1.7117301225662231,
+      "hits": 1,
+      "parries": 0,
+      "weaponContacts": 0
+    },
+    {
+      "technique": "thrust",
+      "defense": "low",
+      "health": 96.80733241245305,
+      "headHeight": 1.6924582719802856,
+      "hits": 1,
+      "parries": 0,
+      "weaponContacts": 0
+    },
+    {
+      "technique": "thrust",
+      "defense": "duck",
+      "health": 94.73201298500373,
+      "headHeight": 1.524487018585205,
+      "hits": 1,
+      "parries": 0,
+      "weaponContacts": 0
+    },
+    {
+      "technique": "thrust",
+      "defense": "retreat",
+      "health": 100,
+      "headHeight": 1.747493028640747,
+      "hits": 0,
+      "parries": 0,
+      "weaponContacts": 0
+    },
+    {
+      "technique": "low_cut",
+      "defense": "open",
+      "health": 0,
+      "headHeight": 1.7474960088729858,
+      "hits": 1,
+      "parries": 0,
+      "weaponContacts": 0
+    },
+    {
+      "technique": "low_cut",
+      "defense": "high",
+      "health": 0,
+      "headHeight": 1.7062352895736694,
+      "hits": 1,
+      "parries": 0,
+      "weaponContacts": 0
+    },
+    {
+      "technique": "low_cut",
+      "defense": "inside",
+      "health": 0,
+      "headHeight": 1.6915812492370605,
+      "hits": 1,
+      "parries": 0,
+      "weaponContacts": 0
+    },
+    {
+      "technique": "low_cut",
+      "defense": "outside",
+      "health": 0,
+      "headHeight": 1.7117315530776978,
+      "hits": 1,
+      "parries": 0,
+      "weaponContacts": 0
+    },
+    {
+      "technique": "low_cut",
+      "defense": "low",
+      "health": 100,
+      "headHeight": 1.7133886814117432,
+      "hits": 0,
+      "parries": 0,
+      "weaponContacts": 0
+    },
+    {
+      "technique": "low_cut",
+      "defense": "duck",
+      "health": 0,
+      "headHeight": 1.5244864225387573,
+      "hits": 1,
+      "parries": 0,
+      "weaponContacts": 0
+    },
+    {
+      "technique": "low_cut",
+      "defense": "retreat",
+      "health": 100,
+      "headHeight": 1.7474960088729858,
+      "hits": 0,
+      "parries": 0,
+      "weaponContacts": 0
+    }
+  ],
+  "matches": [
+    {
+      "outcome": {
+        "status": "completed",
+        "winner": 0,
+        "reason": "Decisive strike",
+        "tick": 2888,
+        "time": 24.066666666666666
+      },
+      "wallMs": 3001.099722000001,
+      "computeMs": 2590.5276679999843,
+      "counts": [
+        {
+          "commands": {
+            "cut_right": 6,
+            "cut_left": 6,
+            "overhead": 4,
+            "low_cut": 2,
+            "feint": 1,
+            "thrust": 2
+          },
+          "rules": [
+            "追踪交战距离",
+            "近距换线",
+            "高低连段",
+            "试探后换直线",
+            "保存精力",
+            "直线压迫"
+          ],
+          "guards": [
+            "high",
+            "outside",
+            "inside"
+          ],
+          "crouchDecisionTicks": 0
+        },
+        {
+          "commands": {
+            "overhead": 3,
+            "low_cut": 2,
+            "thrust": 8,
+            "backstep": 4,
+            "pickup": 3,
+            "cut_left": 1
+          },
+          "rules": [
+            "维持有效距离",
+            "主动换线试探",
+            "高线来袭降重心",
+            "格挡赢得反击窗口",
+            "来袭退步",
+            "倒地恢复",
+            "捡回武器",
+            "退出无效贴身",
+            "交锋后回刺",
+            "来袭左侧封线",
+            "来袭右侧封线"
+          ],
+          "guards": [
+            "high",
+            "outside",
+            "inside"
+          ],
+          "crouchDecisionTicks": 16
+        }
+      ],
+      "contacts": {
+        "hit": 11,
+        "block": 7,
+        "sever": 1,
+        "floor": 1
+      },
+      "presentationFrames": 45,
+      "sha256": "a3eee6f9e2c5b8927623a17e79072810cac0ac466d8150e02552d7676c2fb330"
+    },
+    {
+      "outcome": {
+        "status": "completed",
+        "winner": 1,
+        "reason": "Leg severed",
+        "tick": 1096,
+        "time": 9.133333333333333
+      },
+      "wallMs": 1396.485069000002,
+      "computeMs": 1024.2451639999563,
+      "counts": [
+        {
+          "commands": {
+            "overhead": 2,
+            "low_cut": 1,
+            "thrust": 4
+          },
+          "rules": [
+            "维持有效距离",
+            "主动换线试探",
+            "交锋后回刺"
+          ],
+          "guards": [
+            "high",
+            "outside",
+            "inside"
+          ],
+          "crouchDecisionTicks": 0
+        },
+        {
+          "commands": {
+            "cut_right": 4,
+            "cut_left": 3
+          },
+          "rules": [
+            "追踪交战距离",
+            "近距换线"
+          ],
+          "guards": [
+            "high",
+            "outside"
+          ],
+          "crouchDecisionTicks": 0
+        }
+      ],
+      "contacts": {
+        "hit": 9,
+        "block": 1,
+        "sever": 1
+      },
+      "presentationFrames": 45,
+      "sha256": "584f20646b1939208c912a8f79e1451310fe99353b42cc3a66631869da0f4494"
+    }
+  ],
+  "rawTrialsSha256": "3e4557c27ce354a2d5ac02467766ecc82682b9a00fddd777ff57bcfa39dcbe0a"
+}

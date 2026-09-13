@@ -1,0 +1,79 @@
+{
+  "description": "Committed multi-phase weapon and body trajectories, legible defenses and bounded footwork; explicit candidate gameplay change. No direct transform writes or scripted hits.",
+  "source": "lib/duel/physics.ts",
+  "source_sha256": "64aa76647c79f1d09f9f93823b90ae2d62157fbe4c8976346df20ebc1f51f787",
+  "changes": [
+    {
+      "before": "import { WRIST_ANCHOR } from '../rig/hand';",
+      "after": "import { WRIST_ANCHOR } from '../rig/hand';\nimport {CATALOG,createMotion,sampleMotion,restPose,cancelMotion,duration,phase,type Motion as CombatMotion,type Pose,type Technique} from './choreography';"
+    },
+    {
+      "before": "interact: boolean };",
+      "after": "interact: boolean; crouch?: number };"
+    },
+    {
+      "before": "  remote?: {",
+      "after": "  motion?: CombatMotion; motionPose?: Pose; crouchAmount?: number; lastManualAttack?: boolean; dashSign?: number; dashCooldown?: number;\n  remote?: {"
+    },
+    {
+      "before": "  slash(id = this.localPlayerId) {",
+      "after": "  /** Authored trajectories, applied as bounded targets to dynamic bodies. */\n  technique(kind: Technique, id = this.localPlayerId): boolean {\n    const f=this.fighters[id];\n    if(!this.externalControl || !CATALOG[kind] || this.phase==='finished' || f.down || f.mode!=='upright' || !f.grip || f.motion || f.slashTime>0 || f.recovery>0 || f.recoilTime>0 || f.stamina<CATALOG[kind].cost) return false;\n    this.start();\n    const home=restPose(this.inputs[id].aim.toArray());\n    f.motion=createMotion(kind,f.motionPose??restPose(f.aim.toArray()),home,f.counterTime>0);\n    f.stamina-=CATALOG[kind].cost;f.counterTime=0;\n    f.slashDuration=duration(f.motion);f.windupDuration=f.motion.windup;f.slashTime=f.slashDuration;f.lowStrike=kind==='low_cut';return true;\n  }\n  feint(id = this.localPlayerId): boolean {\n    const f=this.fighters[id];if(!f.motion||f.stamina<4)return false;\n    const cancelled=cancelMotion(f.motion);if(!cancelled)return false;\n    f.motion=cancelled;f.stamina-=4;f.slashTime=duration(cancelled);f.slashDuration=f.slashTime;f.recovery=Math.max(f.recovery,f.slashTime);f.attack=false;return true;\n  }\n  backstep(id = this.localPlayerId) {\n    const f=this.fighters[id];if(!this.externalControl||this.phase==='finished'||f.down||f.mode!=='upright'||(f.dashCooldown??0)>0||f.lungeTime>0||f.recoilTime>0||f.stamina<14)return;\n    this.start();f.dashSign=-1;f.lungeTime=.20;f.dashCooldown=.75;f.stamina-=14;\n  }\n  slash(id = this.localPlayerId) {\n    if(this.externalControl){const f=this.fighters[id];const kind=f.slashSide<0?'cut_right':'cut_left';if(this.technique(kind,id))f.slashSide*=-1;return;}"
+    },
+    {
+      "before": "  chop(id = this.localPlayerId) {",
+      "after": "  chop(id = this.localPlayerId) {\n    if(this.externalControl){this.technique('overhead',id);return;}"
+    },
+    {
+      "before": "    this.start(); f.lungeTime = .24; f.stamina -= 18;",
+      "after": "    if(this.externalControl&&(f.mode!=='upright'||f.down||(f.dashCooldown??0)>0))return;\n    this.start(); f.lungeTime = .24; f.stamina -= 18;f.dashSign=1;f.dashCooldown=.85;"
+    },
+    {
+      "before": "  private updateFighter(f: Fighter, opponent: Fighter) {",
+      "after": "  private updateFighter(f: Fighter, opponent: Fighter) {\n    if(this.externalControl){\n      f.dashCooldown=Math.max(0,(f.dashCooldown??0)-STEP);\n      const requested=this.inputs[f.id].crouch??0;\n      const target=f.mode==='upright'&&!f.down?Math.max(0,Math.min(1,requested))*.22:0;\n      f.crouchAmount=(f.crouchAmount??0)+Math.max(-.9*STEP,Math.min(.9*STEP,target-(f.crouchAmount??0)));\n      if(f.down||f.mode!=='upright'||!f.grip||f.recoilTime>0){f.motion=undefined;f.slashTime=0;}\n      if(f.motion){f.motion.elapsed=Math.min(duration(f.motion),f.motion.elapsed+STEP);if(f.motion.elapsed>=duration(f.motion)-1e-9){f.motionPose=sampleMotion(f.motion);f.motion=undefined;f.slashTime=0;}}\n    }"
+    },
+    {
+      "before": "      f.manualHeld = input.attack; f.manualWindup = Math.max(0, f.manualWindup - STEP);",
+      "after": "      f.manualHeld = input.attack; f.manualWindup = Math.max(0, f.manualWindup - STEP);\n      // Legacy held attack becomes a single committed cut, never unlimited blade shaking.\n      if(this.externalControl){if(input.attack&&!f.lastManualAttack&&!input.guard)this.slash(f.id);f.lastManualAttack=input.attack;f.attack=false;}"
+    },
+    {
+      "before": "    if (f.slashTime > 0) {\n      f.slashTime",
+      "after": "    if(this.externalControl && f.motion){\n      f.slashTime=duration(f.motion)-f.motion.elapsed;f.state=phase(f.motion);f.attack=f.state==='swing';f.guard=false;\n      f.motionPose=sampleMotion(f.motion);requestedAim.set(...f.motionPose.aim);\n      movement.multiplyScalar(f.state==='windup'?.38:f.state==='swing'?.65:.72);\n    } else if (f.slashTime > 0) {\n      f.slashTime"
+    },
+    {
+      "before": "    const speed = (f.guard && f.grip ? .85 : 1.35)",
+      "after": "    const speed = (this.externalControl?(f.guard&&f.grip?1.05:1.55):(f.guard && f.grip ? .85 : 1.35)) * (1-(f.crouchAmount??0)*1.5)"
+    },
+    {
+      "before": "desiredVelocity.addScaledVector(forward, 2.6);",
+      "after": "desiredVelocity.addScaledVector(forward, 2.6*(f.dashSign??1));"
+    },
+    {
+      "before": "    this.updateFeet(f, root);",
+      "after": "    if(this.externalControl){\n      const wanted=f.motion?sampleMotion(f.motion):restPose(f.aim.toArray());\n      if(!f.motion){const previous=f.motionPose??wanted;const k=1-Math.exp(-14*STEP);f.motionPose={aim:[f.aim.x,f.aim.y],hand:previous.hand.map((v,i)=>v+(wanted.hand[i]-v)*k) as [number,number,number],lean:previous.lean+(wanted.lean-previous.lean)*k,twist:previous.twist*(1-k),lower:previous.lower*(1-k)};}\n      const pose=f.motionPose??wanted, crouch=f.crouchAmount??0;\n      f.rig.stanceHeight-=crouch+pose.lower;\n      f.rig.combatLean=pose.lean+(f.lungeTime>0?(f.dashSign??1)*.05:0);\n      f.rig.combatTwist=pose.twist;\n      const h=pose.hand;f.rig.targets[`${f.mainHand}Hand`].set(f.mainHand==='right'?h[0]:-h[0],h[1]-crouch,h[2]);\n      f.rig.targets[`${freeHand}Hand`].set(-sign*.25,1.34-crouch,.19);\n    }\n    this.updateFeet(f, root);"
+    },
+    {
+      "before": "    f.slashTime = 0; f.attack = false; f.state = 'stagger';",
+      "after": "    f.slashTime = 0; f.motion=undefined; f.attack = false; f.state = 'stagger';"
+    },
+    {
+      "before": "    rig.origin.copy(position); rig.heading = heading; rig.stanceHeight = .96;",
+      "after": "    rig.combatCraft=this.externalControl;\n    rig.origin.copy(position); rig.heading = heading; rig.stanceHeight = .96;"
+    },
+    {
+      "before": "    const freq = f.recoilTime > 0 ? 3 : f.guard ? 13 : f.state === 'swing' ? 12 : 9;",
+      "after": "    const freq = f.recoilTime > 0 ? 3 : this.externalControl ? (f.guard?18:f.state==='swing'?18:17) : f.guard ? 13 : f.state === 'swing' ? 12 : 9;"
+    },
+    {
+      "before": "f.weapon.spec.torque * (f.guard ? 1.14 : 1)",
+      "after": "f.weapon.spec.torque * (this.externalControl?1.45:1) * (f.guard ? 1.14 : 1)"
+    },
+    {
+      "before": "      if (!f.attack && !victim.attack && speed < 2.5) return;",
+      "after": "      if (!f.attack && !victim.attack && (this.externalControl || speed < 2.5)) return;"
+    },
+    {
+      "before": "    if (this.phase !== 'fighting' || (!f.attack && speed < 3.5)) return;",
+      "after": "    if (this.phase !== 'fighting' || (this.externalControl ? (!f.motion || f.motion.cancelled || f.motion.elapsed<f.motion.windup) : (!f.attack && speed < 3.5))) return;"
+    }
+  ]
+}

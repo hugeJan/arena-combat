@@ -1,5 +1,6 @@
+import type {Technique, GuardPose} from './choreography';
 export type Slot = 0 | 1;
-export type Command = 'none' | 'slash' | 'chop' | 'lunge' | 'shove' | 'pickup' | 'drop';
+export type Command = 'none' | 'slash' | 'chop' | 'lunge' | 'shove' | 'pickup' | 'drop' | Technique | 'feint' | 'backstep';
 export type Mode = 'upright' | 'fallen' | 'rising' | 'falling' | 'hanging';
 export type Vector = [number, number, number];
 export type Action = {
@@ -9,6 +10,8 @@ export type Action = {
   guard: boolean;
   interact: boolean;
   command: Command;
+  guard_pose?: GuardPose;
+  crouch?: number;
 };
 export type ActionPatch = Partial<Action>;
 export type Feedback = {tick: number; command: Command; accepted: boolean; reason: string};
@@ -16,11 +19,12 @@ export const FEATURES = {
   'time': 'number', 'distance': 'number', 'bearing': 'number',
   'self.health': 'number', 'self.stamina': 'number', 'self.mode': 'mode',
   'self.has_weapon': 'boolean', 'self.can_attack': 'boolean', 'self.can_lunge': 'boolean',
-  'self.counter_ready': 'boolean',
+  'self.counter_ready': 'boolean', 'self.can_feint':'boolean', 'self.can_backstep':'boolean',
+  'self.is_windup':'boolean', 'self.is_recovering':'boolean', 'self.attack_progress':'number',
   'opponent.mode': 'mode', 'opponent.has_weapon': 'boolean',
-  'opponent.weapon_speed': 'number', 'opponent.weapon_height': 'number', 'opponent.incoming': 'boolean',
+  'opponent.weapon_speed': 'number', 'opponent.weapon_height': 'number', 'opponent.incoming': 'boolean', 'opponent.weapon_side':'number',
   'memory.attacks': 'number', 'memory.blocks': 'number',
-  'memory.since_hit': 'number', 'memory.since_block': 'number'
+  'memory.since_threat':'number', 'memory.high_threat_fraction':'number', 'memory.since_hit': 'number', 'memory.since_block': 'number'
 } as const;
 export type Feature = keyof typeof FEATURES;
 export type FeatureValues = Record<Feature, number | boolean | string>;
@@ -36,7 +40,7 @@ export type Step = {
 export type Move = {steps: Step[]; abort_when?: Condition};
 export type Rule = {id: string; when: Condition; move: string; cooldown?: number; interrupt?: boolean};
 export type Design = {
-  version: 'steel-design-1';
+  version: 'steel-design-1' | 'steel-design-2';
   name: string;
   description?: string;
   stance: ActionPatch;
@@ -47,6 +51,7 @@ export type Observation = {
   tick: number; time: number;
   self: {health: number; stamina: number; mode: Mode; has_weapon: boolean;
     can_attack: boolean; can_lunge: boolean; counter_ready: boolean;
+    can_feint?:boolean;can_backstep?:boolean;is_windup?:boolean;is_recovering?:boolean;attack_progress?:number;
     position: Vector; velocity: Vector; heading: number; feedback: Feedback | null};
   opponent: {mode: Mode; has_weapon: boolean; position: Vector; velocity: Vector;
     weapon_tip: Vector; weapon_velocity: Vector};

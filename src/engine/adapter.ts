@@ -1,10 +1,11 @@
+import {TECHNIQUES,GUARDS,phase,duration,type Technique} from '../arena/choreography';
 import {Quaternion, Vector3} from 'three';
 import {DuelSimulation, initPhysics, STEP, type DuelHit} from '../../.engine/stick-steel/lib/duel/physics';
 import {fighterSnapshot,weaponSnapshot,applyFighterSnapshot,applyWeaponSnapshot,type WireState} from '../../.engine/stick-steel/lib/duel/net-state';
 import {validateAction} from '../arena/schema';
 import {clone,deepFreeze,type Action,type Feedback,type Observation,type Slot,type Vector} from '../arena/types';
 export {STEP,initPhysics};
-export type Frame = {tick:number;time:number;fighters:WireState[];weapons:WireState};
+export type Frame = {tick:number;time:number;fighters:WireState[];weapons:WireState; motions?: {technique:string|null;phase:string;crouch:number}[]};
 export type ContactEvent = {tick:number;time:number;kind:string;attacker:number;target:number;part:string;damage:number;strength:number;point:Vector;velocity:Vector;counter:boolean};
 const xyz=(v:{x:number;y:number;z:number}):Vector=>[v.x,v.y,v.z];
 export class ArenaEngine {
@@ -32,9 +33,13 @@ export class ArenaEngine {
     const recent=this.events.slice(this.cursors[slot]);this.cursors[slot]=this.events.length;
     return deepFreeze({tick:this.tick,time:this.tick*STEP,
       self:{health:f.hp,stamina:f.stamina,mode:f.mode,has_weapon:!!f.grip,
-        can_attack:available&&f.slashTime<=0&&f.recovery<=0&&f.recoilTime<=0&&f.stamina>=13,
-        can_lunge:available&&f.lungeTime<=0&&f.recoilTime<=0&&f.recovery<=.2&&f.stamina>=18,
-        counter_ready:f.counterTime>0,position:xyz(body.translation()),velocity:xyz(body.linvel()),heading:f.heading,feedback:clone(this.feedback[slot])},
+        can_attack:available&&f.slashTime<=0&&f.recovery<=0&&f.recoilTime<=0&&f.stamina>=12,
+        can_lunge:available&&(f.dashCooldown??0)<=0&&f.lungeTime<=0&&f.recoilTime<=0&&f.recovery<=.2&&f.stamina>=18,
+        counter_ready:f.counterTime>0,
+        can_feint:!!f.motion&&!f.motion.cancelled&&f.motion.elapsed<f.motion.windup*.85&&f.stamina>=4,
+        can_backstep:available&&(f.dashCooldown??0)<=0&&f.lungeTime<=0&&f.recoilTime<=0&&f.stamina>=14,
+        is_windup:!!f.motion&&phase(f.motion)==='windup',is_recovering:f.recovery>0||!!f.motion&&phase(f.motion)==='recover',
+        attack_progress:f.motion?f.motion.elapsed/duration(f.motion):0,position:xyz(body.translation()),velocity:xyz(body.linvel()),heading:f.heading,feedback:clone(this.feedback[slot])},
       opponent:{mode:other.mode,has_weapon:!!other.grip,position:xyz(op.translation()),velocity:xyz(op.linvel()),weapon_tip:xyz(tip),weapon_velocity:xyz(velocity)},
       events:recent.filter(e=>e.kind!=='floor').map(e=>({kind:e.kind,actor:e.attacker===slot?'self' as const:'opponent' as const,target:e.target===slot?'self' as const:'opponent' as const,time:e.time}))});
   }
@@ -44,7 +49,7 @@ export class ArenaEngine {
     actions.forEach(a=>validateAction(a));
     const sim=this.simulation;
     for(const id of [0,1] as const){const a=actions[id],input=sim.inputs[id];
-      input.move.set(...a.move).clampLength(0,1);input.aim.set(...a.aim);
+      input.move.set(...a.move).clampLength(0,1);const aim=a.guard&&a.guard_pose?GUARDS[a.guard_pose].aim:a.aim;input.aim.set(aim[0],aim[1]);input.crouch=a.crouch??0;
       input.attack=a.attack;input.guard=a.guard;input.interact=a.interact;
     }
     return [0,1].map(id=>{
@@ -54,7 +59,10 @@ export class ArenaEngine {
         if(sim.phase!=='fighting'||f.down){accepted=false;reason='not_fighting';}
         else{
           const before={slash:f.slashTime,lunge:f.lungeTime,shove:f.shoveTime,pickup:f.pickup,grip:f.grip,hang:f.hang};
-          sim[a.command](id);
+          if((TECHNIQUES as readonly string[]).includes(a.command)){accepted=sim.technique(a.command as Technique,id);}
+          else if(a.command==='feint'){accepted=sim.feint(id);}
+          else if(a.command==='backstep'){sim.backstep(id);accepted=f.lungeTime>before.lunge;}
+          else sim[a.command as 'slash'|'chop'|'lunge'|'shove'|'pickup'|'drop'](id);
           switch(a.command){
             case 'slash':case 'chop':accepted=f.slashTime>before.slash;break;
             case 'lunge':accepted=f.lungeTime>before.lunge;break;
@@ -71,7 +79,7 @@ export class ArenaEngine {
   step(){this.simulation.step();this.tick++;
     if(this.tick%6===0){for(const f of this.simulation.fighters){const p=xyz(f.rig.parts.get('pelvis')!.body.translation());if(!p.every(Number.isFinite)||!Number.isFinite(f.hp)||!Number.isFinite(f.stamina))throw new Error('Non-finite physical state');}}
   }
-  frame():Frame{return {tick:this.tick,time:this.tick*STEP,fighters:this.simulation.fighters.map(fighterSnapshot),weapons:weaponSnapshot(this.simulation)};}
+  frame():Frame{return {tick:this.tick,time:this.tick*STEP,fighters:this.simulation.fighters.map(fighterSnapshot),weapons:weaponSnapshot(this.simulation),motions:this.simulation.fighters.map(f=>({technique:f.motion?.kind??null,phase:f.motion?phase(f.motion):f.state,crouch:f.crouchAmount??0}))};}
   dispose(){this.simulation.dispose();}
 }
 /** Only for a separate replay world. Never call this on an active match engine. */
