@@ -1,0 +1,8 @@
+node_modules
+dist/
+.upstream-source/
+outputs/
+.arena/
+.DS_Store
+.env
+.env.*
