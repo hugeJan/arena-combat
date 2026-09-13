@@ -1,0 +1,12 @@
+{
+  "sourceCommit": "c1845832cfb3c6bb36d250876be259a561443cc5",
+  "runId": 34750203172,
+  "runtime": {"node": "v22.23.2", "platform": "darwin", "arch": "arm64"},
+  "tests": {"platformPassed": 22, "upstreamPassed": 6, "skipped": 0, "build": "passed"},
+  "engineHash": "524bdd49f7186c1f2df66ff7e02fefa5ebe8d79245a0313af8baad81b5fb000f",
+  "matches": [
+    {"designs": ["赤锋 · 前压", "苍鹭 · 防守反击"], "winner": 0, "reason": "Unable to continue", "tick": 1569, "time": 13.075, "wallMs": 1411.502917, "computeMs": 1180.131335, "events": 16, "recordSha256": "7dd44b89e6ee3a84a501e8b40a7ad3d226eb454c81c99978b2f19d46756a01fc"},
+    {"designs": ["苍鹭 · 防守反击", "赤锋 · 前压"], "winner": 1, "reason": "Decisive strike", "tick": 2926, "time": 24.383333333333333, "wallMs": 2037.358666, "computeMs": 1884.137976, "events": 27, "recordSha256": "791c639f46f5471cb19216f159cf4e4f996a32e298bb1fab87f4e9e2d2d7f5dd"}
+  ],
+  "notice": "Headless CI results, not the user's MacBook rendering frame rate or independent AI performance."
+}

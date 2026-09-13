@@ -28,7 +28,9 @@ with sync_playwright() as p:
  with page.expect_download() as d:page.click('#export')
  d.value.save_as(str(out/'ui-match.json'))
  page.click('#replay');page.wait_for_timeout(600);assert page.locator('#mode').inner_text()=='REPLAY'
- page.locator('#seek').fill('2');page.locator('#seek').dispatch_event('input');page.wait_for_timeout(150)
+ page.locator('#seek').press('Home')
+ for _ in range(60):page.locator('#seek').press('ArrowRight')
+ page.wait_for_timeout(150)
  assert page.locator('#clock').inner_text()=='02.00'
  page.screenshot(path=str(out/'replay.png'),full_page=True)
  page.set_viewport_size({'width':390,'height':844});page.wait_for_timeout(400);page.screenshot(path=str(out/'mobile.png'),full_page=True)

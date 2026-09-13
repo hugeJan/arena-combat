@@ -1,0 +1,70 @@
+name: Arena Combat validation
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['docs/**', 'README.md', 'AGENTS.md']
+  pull_request:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+concurrency:
+  group: arena-validation-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  core:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-14]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check fixed engine and platform
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          mkdir -p outputs/checks
+          git rev-parse HEAD > outputs/checks/commit.txt
+          npm test | tee outputs/checks/tests.txt
+          npm run test:upstream | tee outputs/checks/upstream.txt
+          npm run build | tee outputs/checks/build.txt
+          npm run arena -- match examples/pressure.json examples/counter.json --swap --duration 30 --out outputs/matches
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: core-${{ matrix.os }}
+          path: outputs/
+          retention-days: 7
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Real browser smoke test
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run build
+          python -m pip install 'playwright==1.55.0'
+          python -m playwright install --with-deps chromium
+          python scripts/check-browser.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser
+          path: outputs/browser/
+          retention-days: 7
