@@ -2,13 +2,44 @@ name: Combat craft validation
 on:
   push:
     branches: [feat/combat-craft]
+  pull_request:
+    branches: [main]
 permissions:
   contents: read
-defaults:
-  run:
-    shell: bash
+concurrency:
+  group: combat-craft-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
-  validate:
+  core:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-14]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fixed source checks
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm test
+          npm run test:upstream
+          npm run build
+          mkdir -p /tmp/craft-${{ matrix.os }}
+          git rev-parse HEAD > /tmp/craft-${{ matrix.os }}/commit.txt
+          cp docs/evidence/combat-craft-local.json /tmp/craft-${{ matrix.os }}/local-evidence.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: craft-${{ matrix.os }}
+          path: /tmp/craft-${{ matrix.os }}/
+          retention-days: 7
+  browser:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -18,21 +49,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install pinned dependencies
-        run: npm ci --ignore-scripts --no-audit --no-fund
-      - name: Capture exact source and dependencies
-        run: |
-          mkdir -p /tmp/craft-source
-          git archive --format=tar.gz HEAD > /tmp/craft-source/source.tar.gz
-          git rev-parse HEAD > /tmp/craft-source/commit.txt
-          tar -czf /tmp/craft-source/dependencies.tar.gz node_modules
-      - uses: actions/upload-artifact@v4
+      - uses: actions/setup-python@v5
         with:
-          name: craft-source
-          path: /tmp/craft-source/
-          retention-days: 3
-      - name: Regression and build
+          python-version: '3.12'
+      - name: Desktop spectator smoke test
         run: |
-          npm test
-          npm run test:upstream
+          npm ci --ignore-scripts --no-audit --no-fund
           npm run build
+          python -m pip install 'playwright==1.55.0'
+          python -m playwright install --with-deps chromium
+          python scripts/check-browser.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: craft-browser
+          path: outputs/browser/
+          retention-days: 7
