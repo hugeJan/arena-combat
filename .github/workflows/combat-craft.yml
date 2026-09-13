@@ -1,0 +1,38 @@
+name: Combat craft validation
+on:
+  push:
+    branches: [feat/combat-craft]
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Capture exact source and dependencies
+        run: |
+          mkdir -p /tmp/craft-source
+          git archive --format=tar.gz HEAD > /tmp/craft-source/source.tar.gz
+          git rev-parse HEAD > /tmp/craft-source/commit.txt
+          tar -czf /tmp/craft-source/dependencies.tar.gz node_modules
+      - uses: actions/upload-artifact@v4
+        with:
+          name: craft-source
+          path: /tmp/craft-source/
+          retention-days: 3
+      - name: Regression and build
+        run: |
+          npm test
+          npm run test:upstream
+          npm run build
