@@ -1,0 +1,75 @@
+{
+  "version": "combat-craft-ci-1",
+  "date": "2026-09-13",
+  "pullRequest": 1,
+  "workflowRun": 34756244545,
+  "head": "f4d64a5aabafde4cf564ccda12614cdc666b5f78",
+  "testedMerge": "9bb7e7d5faf850cc98a5120b3e983f8c405dd868",
+  "mergedCommit": "78895ab8a856ff5889d27fd5fb2643ea86b72688",
+  "engineHash": "3a66e7ebd8c5a6a7b07f97f4a03810289417af5ba9cc58da50d14be130951afe",
+  "conclusion": "success",
+  "environments": {
+    "macos": {
+      "runtime": {"node":"v22.23.2","platform":"darwin","arch":"arm64"},
+      "platformTests":{"passed":44,"failed":0,"skipped":0,"durationMs":12302.897375},
+      "upstreamCoreTests":{"passed":6,"failed":0,"skipped":0},
+      "buildPassed":true,
+      "physicalTrials":35,
+      "artifactId":10317652056,
+      "artifactSha256":"397ccf3468851fb9db45f681500570065c4afc0c82bacf65b7543e313a39471d",
+      "matches":[
+        {"winner":0,"reason":"Blood loss","tick":2015,"simSeconds":16.791666666666668,"wallMs":2593.2245,"computeMs":2114.69762,"contacts":{"hit":11,"block":3,"sever":1},"presentationFrames":45,"archiveSha256":"7029f563bd1d4cc8b5c65d1215a437c7b4ad17420e00f81aa14093e0a2265f85"},
+        {"winner":1,"reason":"Leg severed","tick":1096,"simSeconds":9.133333333333333,"wallMs":1863.710916,"computeMs":1301.906196,"contacts":{"hit":9,"block":1,"sever":1},"presentationFrames":45,"archiveSha256":"28b22e99a5bc9a3ca62286dc05f036c0440402d4a41b1957ceb4a34574413420"}
+      ]
+    },
+    "linux": {
+      "runtime":{"node":"v22.23.2","platform":"linux","arch":"x64"},
+      "platformTests":{"passed":44,"failed":0,"skipped":0,"durationMs":16488.915935},
+      "upstreamCoreTests":{"passed":6,"failed":0,"skipped":0},
+      "buildPassed":true,
+      "physicalTrials":35,
+      "artifactId":10317352529,
+      "artifactSha256":"8186e2bcab3bbaae56fb48269b954411199609231aa518e5d4ae69ce1b68ce8f",
+      "matches":[
+        {"winner":0,"reason":"Decisive strike","tick":2888,"simSeconds":24.066666666666666,"wallMs":3515.463559,"computeMs":3028.389661,"contacts":{"hit":11,"block":7,"sever":1,"floor":1},"presentationFrames":45,"archiveSha256":"3caf7f6ce56300dd8b59c74b6e9cf7844c2c6bc5dd154204bad46c3833f04599"},
+        {"winner":1,"reason":"Leg severed","tick":1096,"simSeconds":9.133333333333333,"wallMs":1672.863098,"computeMs":1220.946127,"contacts":{"hit":9,"block":1,"sever":1},"presentationFrames":45,"archiveSha256":"59bc6c780d6b7f38393c8970054ee68b99634bb0e94cfccd9a7392be4aed1b2a"}
+      ]
+    }
+  },
+  "selectedControlledTrials":[
+    {"technique":"cut_right","defense":"open","health":75.89755414862809,"parries":0},
+    {"technique":"cut_right","defense":"duck","health":89.5223627408133,"parries":0},
+    {"technique":"overhead","defense":"open","health":88.78820153435203,"parries":0},
+    {"technique":"overhead","defense":"high","health":100,"parries":1},
+    {"technique":"thrust","defense":"outside","health":91.42669692036208,"parries":0},
+    {"technique":"thrust","defense":"inside","health":100,"parries":1},
+    {"technique":"low_cut","defense":"duck","health":0,"parries":0},
+    {"technique":"low_cut","defense":"low","health":100,"parries":0}
+  ],
+  "browser":{
+    "artifactId":10318041229,
+    "artifactSha256":"6fff117045f699e207e304f4122e34691bffeb944a61a3df1b42c5ee4933a194",
+    "environment":"GitHub ubuntu-latest, Playwright 1.55.0, Chromium 140, no dedicated GPU",
+    "errors":[],"failedRequests":[],"fpsText":"6 FPS · 已记录姿态 · 实算 1.90s",
+    "pauseStable":true,"replaySeek":true,"desktopOnly":true,"fightHidesWorkbench":true,"desktopNoOverflow":true,
+    "phaseCaptures":[
+      {"technique":"cut_right","windupTick":143,"swingTick":173,"recoverTick":214},
+      {"technique":"cut_left","windupTick":145,"swingTick":175,"recoverTick":218},
+      {"technique":"overhead","windupTick":152,"swingTick":185,"recoverTick":230},
+      {"technique":"thrust","windupTick":139,"swingTick":165,"recoverTick":205},
+      {"technique":"low_cut","windupTick":147,"swingTick":179,"recoverTick":224}
+    ],
+    "all15ActualStatesMatched":true,
+    "actualOutcome":{"status":"completed","winner":0,"reason":"Decisive strike","tick":1533,"time":12.775},
+    "presentationFrames":45,
+    "uiArchiveSha256":"abcff6feddd862c7d773ee42e48d9601075439e28846d85b1a27ee349d70d7d8",
+    "fightScreenshotSha256":"9cb5c7853b84eea58a4943b37da5df2c1719c7770f5e8a5707af48f50d0726c9",
+    "visualReview":"Actual fight and all 15 phase captures viewed. Distinct paths and low posture visible; finite-force tracking remains imperfect. Not motion capture or historical swordsmanship validation."
+  },
+  "limits":[
+    "Developer fixtures and examples, not independent AI entries.",
+    "No claim of cross-environment determinism or user-device FPS.",
+    "Only an actual parry/contact event establishes a weapon parry; health changes may include wounds and bleeding.",
+    "Full raw 35-case data and screenshots remain in CI artifacts for seven days; this file is an evidence index."
+  ]
+}
