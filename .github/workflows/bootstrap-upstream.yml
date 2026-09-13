@@ -3,9 +3,11 @@ on:
   push:
     branches: [main]
     paths: ['.github/workflows/bootstrap-upstream.yml']
-  workflow_dispatch:
 permissions:
   contents: read
+defaults:
+  run:
+    shell: bash
 jobs:
   import:
     if: github.repository == 'hugeJan/arena-combat'
@@ -15,6 +17,8 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/checkout@v4
         with:
           repository: Rabneba/stick-steel
@@ -25,25 +29,24 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Import public game modules, excluding fonts and production configuration
+      - name: Import pinned public source and assets
         run: |
           python3 - <<'PY'
           import pathlib, shutil, json, hashlib, subprocess
           root=pathlib.Path.cwd(); src=root/'.upstream-source'; dst=root/'vendor/stick-steel'
           assert subprocess.check_output(['git','-C',str(src),'rev-parse','HEAD'],text=True).strip()=='4c8e1d05a1ec47db93b687a81a82878727308b20'
-          if dst.exists(): raise SystemExit('Baseline already imported; refusing to overwrite modifications')
+          if dst.exists(): raise SystemExit('Already imported; refusing overwrite')
           dst.mkdir(parents=True)
           blocked={'.woff','.woff2','.ttf','.otf','.eot'}
           for folder in ['lib','tests']:
               for path in (src/folder).rglob('*'):
                   if path.is_file() and not path.is_symlink() and path.suffix.lower() not in blocked:
                       out=dst/path.relative_to(src); out.parent.mkdir(parents=True,exist_ok=True); shutil.copyfile(path,out)
-          for name in ['LICENSE','README.md']:
-              shutil.copyfile(src/name,dst/name)
+          for name in ['LICENSE','README.md']: shutil.copyfile(src/name,dst/name)
           assets=root/'public/assets'; assets.mkdir(parents=True)
           for path in (src/'public/assets').rglob('*'):
               if path.is_file() and not path.is_symlink() and path.suffix.lower() not in blocked and 'font' not in str(path.relative_to(src/'public/assets')).lower():
-                  if path.read_bytes()[:50].startswith(b'version https://git-lfs.github.com/spec'): raise SystemExit('Missing LFS asset: '+str(path))
+                  if path.read_bytes()[:50].startswith(b'version https://git-lfs.github.com/spec'): raise SystemExit('Missing LFS asset')
                   out=assets/path.relative_to(src/'public/assets'); out.parent.mkdir(parents=True,exist_ok=True); shutil.copyfile(path,out)
           manifest={'repository':'https://github.com/Rabneba/stick-steel','commit':'4c8e1d05a1ec47db93b687a81a82878727308b20','license':'MIT','networkServices':False,'files':{}}
           for folder in [dst,assets]:
@@ -56,27 +59,45 @@ jobs:
           shutil.copyfile(dst/'LICENSE',root/'LICENSE')
           PY
           npm install --ignore-scripts --no-audit --no-fund
-      - name: Publish imported baseline without rewriting history
+      - name: Publish exact imported tree through Git data API
+        env:
+          ARENA_TOKEN: ${{ github.token }}
         run: |
-          git config user.name 'Arena development'
-          git config user.email 'arena-development@users.noreply.github.com'
-          git add -- vendor/stick-steel public/assets upstream.lock.json package.json package-lock.json .gitignore LICENSE
-          git commit -m 'Import pinned Stick and Steel game modules and licensed assets'
-          git push origin HEAD:main
-      - name: Run real upstream physical tests
+          python3 - <<'PY'
+          import pathlib, json, os, base64, subprocess, urllib.request
+          root=pathlib.Path.cwd(); endpoint='https://api.github.com/repos/hugeJan/arena-combat/'
+          def api(path,data=None,method=None):
+              req=urllib.request.Request(endpoint+path,data=json.dumps(data).encode() if data is not None else None,method=method,headers={'Authorization':'Bearer '+os.environ['ARENA_TOKEN'],'Accept':'application/vnd.github+json','Content-Type':'application/json','User-Agent':'arena-source-import'})
+              with urllib.request.urlopen(req,timeout=60) as response:return json.load(response)
+          parent=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+          assert api('git/ref/heads/main')['object']['sha']==parent,'Remote changed; refusing overwrite'
+          base=api('git/commits/'+parent)['tree']['sha']
+          names=list(json.loads((root/'upstream.lock.json').read_text())['files'])+['upstream.lock.json','package.json','package-lock.json','.gitignore','LICENSE']
+          tree=[]
+          for name in names:
+              content=(root/name).read_bytes(); entry={'path':name,'mode':'100644','type':'blob'}
+              try: entry['content']=content.decode('utf-8')
+              except UnicodeDecodeError: entry['sha']=api('git/blobs',{'content':base64.b64encode(content).decode(),'encoding':'base64'})['sha']
+              tree.append(entry)
+          newtree=api('git/trees',{'base_tree':base,'tree':tree})['sha']
+          commit=api('git/commits',{'message':'Import pinned Stick and Steel game modules and licensed assets','tree':newtree,'parents':[parent]})['sha']
+          api('git/refs/heads/main',{'sha':commit,'force':False},'PATCH')
+          pathlib.Path('/tmp/imported-commit.txt').write_text(commit+'\n')
+          print('Imported source commit:',commit)
+          PY
+      - name: Test original physical gameplay
         run: |
           mkdir -p /tmp/arena-baseline
           npm run test:upstream | tee /tmp/arena-baseline/upstream-tests.txt
-      - name: Capture inspectable source and offline dependencies
+      - name: Save baseline evidence
         if: always()
         run: |
           mkdir -p /tmp/arena-baseline
-          git archive --format=tar.gz HEAD > /tmp/arena-baseline/source.tar.gz
-          git rev-parse HEAD > /tmp/arena-baseline/commit.txt
-          if [ -d node_modules ]; then tar -czf /tmp/arena-baseline/dependencies.tar.gz node_modules; fi
+          tar --exclude=node_modules --exclude=.git --exclude=.upstream-source -czf /tmp/arena-baseline/source.tar.gz .
+          if [ -f /tmp/imported-commit.txt ]; then cp /tmp/imported-commit.txt /tmp/arena-baseline/commit.txt; fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: arena-baseline
+          name: arena-baseline-recovered
           path: /tmp/arena-baseline/
           retention-days: 7
