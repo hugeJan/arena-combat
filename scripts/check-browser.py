@@ -25,12 +25,18 @@ with sync_playwright() as p:
     page.wait_for_function("document.getElementById('start').disabled === false", timeout=20000)
     page.screenshot(path=str(out/'ready.png'), full_page=True)
     page.click('#lab-toggle')
+    frozen = []
     for kind in ['cut_right','cut_left','overhead','thrust','low_cut']:
         page.select_option('#lab-technique', kind)
-        page.click('#lab-run')
-        page.wait_for_function('Number(document.body.dataset.tick)>=165', timeout=30000)
-        page.click('#pause')
-        page.screenshot(path=str(out/f'lab-{kind}.png'), full_page=True)
+        for phase in ['windup','swing','recover']:
+            page.select_option('#lab-phase', phase)
+            page.click('#lab-run')
+            page.wait_for_function("document.body.dataset.labRunning==='false'", timeout=30000)
+            tick = page.get_attribute('body','data-tick')
+            page.wait_for_timeout(150)
+            assert page.get_attribute('body','data-tick') == tick, 'Laboratory freeze must stop on a physics tick'
+            frozen.append({'technique':kind,'requestedPhase':phase,'tick':int(tick),'state':page.locator('#state-a').inner_text()})
+            page.screenshot(path=str(out/f'lab-{kind}-{phase}.png'), full_page=True)
     page.click('#start')
     page.wait_for_function('Number(document.body.dataset.tick)>360', timeout=30000)
     assert page.locator('aside').is_hidden(), 'Design controls must not occupy the fighting view'
@@ -65,7 +71,7 @@ with sync_playwright() as p:
     page.screenshot(path=str(out/'desktop-1100.png'), full_page=True)
     report={'errors':errors,'failedRequests':failed,'fpsText':page.locator('#performance').inner_text(),
             'result':page.locator('#result').inner_text(),'pauseStable':True,'replaySeek':True,
-            'desktopOnly':True,'actionLab':5,'fightHidesWorkbench':True,'desktopNoOverflow':True}
+            'desktopOnly':True,'actionLab':5,'frozenPhases':frozen,'fightHidesWorkbench':True,'desktopNoOverflow':True}
     (out/'report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
     print(json.dumps(report,ensure_ascii=False,indent=2))
     browser.close()

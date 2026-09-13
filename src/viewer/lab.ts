@@ -1,14 +1,21 @@
 import {ArenaEngine,STEP} from '../engine/adapter';
 import {neutralAction,type Action} from '../arena/types';
-import {type Technique,type GuardPose} from '../arena/choreography';
+import {CATALOG,type Technique,type GuardPose} from '../arena/choreography';
 /** Developer action laboratory. Inputs are scripted; hits and outcomes are not.
  * Never submitted to a leaderboard or presented as AI-authored combat. */
 export class MotionLab {
   readonly engine=new ArenaEngine();readonly kind:Technique;
   private issued=false;
-  constructor(kind:Technique,private defense:string){this.kind=kind;this.engine.start();}
+  readonly stopTick:number;
+  constructor(kind:Technique,private defense:string,readonly freezeAt:'all'|'windup'|'swing'|'recover'='all'){
+    this.kind=kind;
+    const spec=CATALOG[kind];
+    const offset=freezeAt==='windup'?spec.windup*.75:freezeAt==='swing'?spec.windup+spec.strike*.55:spec.windup+spec.strike+spec.recover*.5;
+    this.stopTick=freezeAt==='all'?540:Math.ceil((.95+offset)/STEP);
+    this.engine.start();
+  }
   step(){
-    if(this.engine.simulation.phase==='finished'||this.engine.tick>=540)return false;
+    if(this.engine.simulation.phase==='finished'||this.engine.tick>=this.stopTick)return false;
     const t=this.engine.tick*STEP;
     const a:Action=neutralAction(),b:Action=neutralAction();
     a.guard=true;b.guard=this.defense!=='open'&&this.defense!=='duck';

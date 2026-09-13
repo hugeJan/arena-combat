@@ -46,13 +46,13 @@ function updateUI(){
  $('result').hidden=!out||replaying||!!lab;
  if(out&&!replaying)$('result').textContent=out.status==='void'?'对局作废：'+out.reason:out.winner===null?'时间到 · 平局':`${out.winner===0?'红方':'蓝方'}获胜`;
  $<HTMLButtonElement>('start').disabled=!ready||!!(match&&!match.archive.outcome)||document.querySelectorAll('.validation.invalid').length>0;
- $('status').textContent=lab?(labRunning?'动作对照进行中':'动作对照结束，不计成绩'):replaying?'回放 · 不重新判胜负':paused?'已暂停':out?'本局已结束':match?'对战进行中':'准备就绪';
+ $('status').textContent=lab?(labRunning?'动作对照进行中':lab.freezeAt==='all'?'动作对照结束，不计成绩':'阶段定格 · 不计成绩'):replaying?'回放 · 不重新判胜负':paused?'已暂停':out?'本局已结束':match?'对战进行中':'准备就绪';
  $<HTMLButtonElement>('replay').disabled=!out;$<HTMLButtonElement>('export').disabled=!out;$<HTMLButtonElement>('pause').disabled=lab?!labRunning:!match||!!out&&!replaying;
  $<HTMLInputElement>('seek').disabled=!out;$<HTMLInputElement>('seek').max=String(match?.archive.presentationFrames?.at(-1)?.time??out?.time??30);$<HTMLInputElement>('seek').value=String(time);
  $('performance').textContent=`${lastFps} FPS · ${replaying?'已记录姿态':accumulator>.1?'计算落后 '+accumulator.toFixed(2)+'s':'120 Hz 固定步进'}${match?' · 实算 '+(match.archive.computeMs/1000).toFixed(2)+'s':''}`;
  $('timeline-label').textContent=replaying?'拖动时间轴回看':'比赛结束后可拖动回看';
  // Small diagnostics surface for browser tests; no strategy receives these values.
- document.body.dataset.phase=lab?'lab':out?.status??(match?'running':'ready');document.body.dataset.tick=String(lab?.engine.tick??match?.engine.tick??0);
+ document.body.dataset.labRunning=String(labRunning);document.body.dataset.phase=lab?'lab':out?.status??(match?'running':'ready');document.body.dataset.tick=String(lab?.engine.tick??match?.engine.tick??0);
  $<HTMLButtonElement>('lab-toggle').disabled=!!match&&!match.archive.outcome;
  if(lab){$('trace-a').textContent='动作实验室：'+CATALOG[lab.kind].label;$('trace-b').textContent='对照输入由测试场发送；结果仍由实际碰撞产生';}
 }
@@ -97,8 +97,8 @@ $('trails').onclick=()=>{trajectories=!trajectories;stage?.setTrajectories(traje
 function runLab(){
  if(!ready||!stage||match&&!match.archive.outcome)return;
  lab?.dispose();preview?.dispose();preview=null;replayWorld?.dispose();replayWorld=null;
- lab=new MotionLab($<HTMLSelectElement>('lab-technique').value as Technique,$<HTMLSelectElement>('lab-defense').value);
- labRunning=true;paused=false;replaying=false;accumulator=0;stage.bind(lab.engine.simulation);lab.engine.onHit=h=>stage?.hit(h);
+ lab=new MotionLab($<HTMLSelectElement>('lab-technique').value as Technique,$<HTMLSelectElement>('lab-defense').value,$<HTMLSelectElement>('lab-phase').value as 'all'|'windup'|'swing'|'recover');
+ labRunning=true;paused=false;replaying=false;accumulator=0;$('pause').textContent='暂停';stage.bind(lab.engine.simulation);lab.engine.onHit=h=>stage?.hit(h);
  document.body.classList.add('watching','lab-active');$('stage-note').textContent='动作实验室 · 不生成正式比赛成绩';$('name-a').textContent='招式执行';$('name-b').textContent='对照防守';last=performance.now();updateUI();
 }
 $('lab-toggle').onclick=()=>{$('lab-panel').hidden=!$('lab-panel').hidden;if(!$('lab-panel').hidden)runLab();};
